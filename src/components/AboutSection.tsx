@@ -3,6 +3,7 @@ import { Heart, Sun, Feather, Camera, ImageIcon } from 'lucide-react';
 import { useSiteContent } from '../context/ContentContext';
 import { QuickEditPhotoModal } from './AdminEditorModal';
 import { EditableText } from './EditableText';
+import { resolveImageUrl } from '../utils/imageHelper';
 
 export const AboutSection: React.FC = () => {
   const { content, isAdminMode, updateAbout } = useSiteContent();
@@ -106,7 +107,7 @@ export const AboutSection: React.FC = () => {
             <div className="space-y-4 flex flex-col justify-between">
               <div className="overflow-hidden rounded-lg group h-64 sm:h-72 relative">
                 <img
-                  src={about.photo1}
+                  src={resolveImageUrl(about.photo1)}
                   alt="여백스튜디오 베일 컷"
                   loading="lazy"
                   decoding="async"
@@ -134,7 +135,7 @@ export const AboutSection: React.FC = () => {
             <div className="flex flex-col justify-between h-full">
               <div className="overflow-hidden rounded-lg group h-full min-h-[300px] relative">
                 <img
-                  src={about.photo2}
+                  src={resolveImageUrl(about.photo2)}
                   alt="여백스튜디오 세레머니 컷"
                   loading="lazy"
                   decoding="async"
@@ -209,7 +210,7 @@ export const AboutSection: React.FC = () => {
 
               <div className="relative group cursor-pointer" onClick={() => isAdminMode && setActivePhotoModal('directorPhoto')}>
                 <img
-                  src={about.directorPhoto}
+                  src={resolveImageUrl(about.directorPhoto)}
                   alt="대표작가 프로필"
                   referrerPolicy="no-referrer"
                   className="w-12 h-12 rounded-full object-cover border border-[#A68F7E]/40"

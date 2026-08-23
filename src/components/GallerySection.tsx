@@ -5,17 +5,7 @@ import { useSiteContent } from '../context/ContentContext';
 import { QuickEditPhotoModal } from './AdminEditorModal';
 import { compressImageFile } from '../utils/storageHelper';
 import { uploadImageToVercelBlob } from '../utils/blobStorage';
-
-function getDirectImageUrl(url: string | undefined): string {
-  if (!url) return '';
-  if (url.includes('postimg.cc/') && !url.includes('i.postimg.cc/')) {
-    const match = url.match(/postimg\.cc\/([A-Za-z0-9]+)/);
-    if (match && match[1]) {
-      return `https://i.postimg.cc/${match[1]}/photo.jpg`;
-    }
-  }
-  return url;
-}
+import { resolveImageUrl } from '../utils/imageHelper';
 
 export const GallerySection: React.FC = () => {
   const { content, isAdminMode, updateGalleryItem, addGalleryItem, deleteGalleryItem } = useSiteContent();
@@ -223,7 +213,7 @@ export const GallerySection: React.FC = () => {
                 className="overflow-hidden aspect-4/3 sm:aspect-3/4 rounded-lg relative"
               >
                 <img
-                  src={getDirectImageUrl(item.imageUrl)}
+                  src={resolveImageUrl(item.imageUrl)}
                   alt={item.title}
                   loading="lazy"
                   decoding="async"
@@ -494,7 +484,7 @@ export const GallerySection: React.FC = () => {
             {/* Image Box */}
             <div className="lg:w-3/5 bg-black flex items-center justify-center p-2 min-h-[300px] sm:min-h-[450px]">
               <img
-                src={getDirectImageUrl(activeLightboxItem.imageUrl)}
+                src={resolveImageUrl(activeLightboxItem.imageUrl)}
                 alt={activeLightboxItem.title}
                 referrerPolicy="no-referrer"
                 className="max-h-[70vh] w-auto max-w-full object-contain rounded-xs"

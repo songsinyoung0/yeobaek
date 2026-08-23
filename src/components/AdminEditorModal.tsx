@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useSiteContent } from '../context/ContentContext';
 import { compressImageFile } from '../utils/storageHelper';
 import { uploadImageToVercelBlob } from '../utils/blobStorage';
+import { resolveImageUrl } from '../utils/imageHelper';
 import {
   Edit3,
   X,
@@ -268,7 +269,7 @@ export const QuickEditPhotoModal: React.FC<QuickEditPhotoModalProps> = ({
           </button>
           <button
             onClick={() => {
-              onSave(url);
+              onSave(resolveImageUrl(url));
               onClose();
             }}
             className="px-6 py-2.5 bg-[#1A1A1A] hover:bg-[#A68F7E] text-white rounded-xl text-xs font-semibold flex items-center space-x-1.5 shadow-md transition-all active:scale-95"

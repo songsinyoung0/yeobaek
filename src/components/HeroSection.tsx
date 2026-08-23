@@ -5,10 +5,10 @@ import { QuickEditPhotoModal } from './AdminEditorModal';
 import { EditableText } from './EditableText';
 
 const DEFAULT_SLIDE_IMAGES = [
-  '/images/main-1.jpg',
-  '/images/main-2.jpg',
-  '/images/main-3.jpg',
-  '/images/main-4.jpg',
+  'https://i.postimg.cc/qqPJBy3n/mein-1.jpg',
+  'https://i.postimg.cc/1XkmRwqG/mein-2.jpg',
+  'https://i.postimg.cc/zvszDKgP/mein-3.jpg',
+  'https://i.postimg.cc/FzMrF3LD/mein-4.jpg',
 ];
 
 interface HeroSectionProps {

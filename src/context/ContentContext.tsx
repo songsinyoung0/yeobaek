@@ -52,9 +52,9 @@ const DEFAULT_ABOUT: AboutContent = {
   aboutDesc2: '여백스튜디오의 작가진은 현장에서 지나치게 개입하기보다, 두 사람의 호흡과 하객분들의 온정 어린 축복을 관조하듯 기품 있게 포착합니다.',
   directorName: '송신영 대표작가',
   directorTitle: 'Head Photographer & Director',
-  directorPhoto: '/images/profile.jpg',
-  photo1: '/images/about-1.jpg',
-  photo2: '/images/about-2.jpg',
+  directorPhoto: 'https://i.postimg.cc/CL8MPP3r/profile.jpg',
+  photo1: 'https://i.postimg.cc/WbZpWWB8/about-1.jpg',
+  photo2: 'https://i.postimg.cc/L6P4CCcy/about-2.jpg',
 };
 
 const DEFAULT_STUDIO_INFO: StudioInfo = {
@@ -73,7 +73,7 @@ const DEFAULT_STUDIO_INFO: StudioInfo = {
   kakaoLink: 'https://pf.kakao.com/_AxdWxgn',
 };
 
-const STORAGE_KEY = 'yeobaek_site_content_v48';
+const STORAGE_KEY = 'yeobaek_site_content_v49';
 const INQUIRIES_STORAGE_KEY = 'yeobaek_inquiries_v1';
 
 interface ContentContextType {
