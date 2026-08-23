@@ -1,0 +1,6 @@
+{
+  "name": "여백스튜디오 (Yeobaek Studio)",
+  "description": "감성적이고 모던한 웨딩 본식 스냅 전문 스튜디오 브랜드 웹사이트",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

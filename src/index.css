@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif-kr: 'Noto Serif KR', serif;
+  --font-serif-en: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
+  
+  --color-bento-bg: #F5F3EF;
+  --color-bento-card: #FFFFFF;
+  --color-bento-accent-bg: #EAE7E2;
+  --color-bento-dark: #1A1A1A;
+  --color-bento-taupe: #A68F7E;
+  --color-bento-border: rgba(0, 0, 0, 0.06);
+}
+
+@layer utilities {
+  .font-serif-kr {
+    font-family: 'Noto Serif KR', serif;
+  }
+
+  .font-serif-en {
+    font-family: 'Playfair Display', 'Cormorant Garamond', Georgia, serif;
+  }
+
+  .font-sans-kr {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  }
+}
+
+/* Custom Smooth Scrolling & Scrollbar */
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F5F3EF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D5CEC4;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #A68F7E;
+}
+
+/* Bento card hover effect & GPU acceleration */
+.bento-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.bento-card:hover {
+  border-color: rgba(0, 0, 0, 0.12);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+}
+
+/* Subtle image overlay & zoom with GPU acceleration */
+.img-zoom {
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform;
+}
+
+.img-zoom:hover {
+  transform: scale(1.03) translateZ(0);
+}
+
+/* Smooth Image Loading */
+img {
+  content-visibility: auto;
+}
+
+
