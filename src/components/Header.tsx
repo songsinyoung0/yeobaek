@@ -44,23 +44,23 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
           : 'bg-gradient-to-b from-black/60 via-black/20 to-transparent text-white py-5'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 lg:px-12 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-12 flex items-center justify-between">
         {/* Brand Logo & Partner Tag */}
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-1.5 sm:space-x-3 min-w-0">
           <button
             onClick={() => handleNavClick('hero')}
-            className="group flex flex-col text-left focus:outline-hidden"
+            className="group flex flex-col text-left focus:outline-hidden shrink-0"
             aria-label="여백스튜디오 메인으로 이동"
           >
             <span
-              className={`font-serif-kr text-xl sm:text-2xl font-semibold tracking-widest uppercase transition-colors duration-300 ${
+              className={`font-serif-kr text-lg sm:text-2xl font-semibold tracking-wider sm:tracking-widest uppercase transition-colors duration-300 ${
                 isScrolled ? 'text-[#1A1A1A] group-hover:text-[#A68F7E]' : 'text-white group-hover:text-[#EAE7E2]'
               }`}
             >
               여백스튜디오
             </span>
             <span
-              className={`font-serif-en text-[10px] sm:text-[11px] tracking-[0.3em] uppercase font-light -mt-0.5 ${
+              className={`font-serif-en text-[9px] sm:text-[11px] tracking-[0.25em] sm:tracking-[0.3em] uppercase font-light -mt-0.5 ${
                 isScrolled ? 'text-[#888888]' : 'text-white/80'
               }`}
             >
@@ -68,12 +68,13 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
             </span>
           </button>
 
+          {/* Western Life Hotel Official Partner Badge (Visible on Mobile & Desktop) */}
           <span
             onClick={() => handleNavClick('pricing')}
-            className={`hidden sm:inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-serif-kr font-medium cursor-pointer transition-all ${
+            className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8.5px] sm:text-[10px] font-serif-kr font-medium cursor-pointer transition-all whitespace-nowrap shadow-2xs ${
               isScrolled
-                ? 'bg-[#A68F7E]/15 text-[#A68F7E] hover:bg-[#A68F7E] hover:text-white'
-                : 'bg-white/20 text-white hover:bg-white hover:text-[#1A1A1A]'
+                ? 'bg-[#A68F7E]/15 text-[#A68F7E] hover:bg-[#A68F7E] hover:text-white border border-[#A68F7E]/30'
+                : 'bg-white/20 text-white hover:bg-white hover:text-[#1A1A1A] border border-white/30 backdrop-blur-xs'
             }`}
             title="익산 웨스턴라이프 호텔 공식 제휴 스튜디오 (제휴가 보기)"
           >

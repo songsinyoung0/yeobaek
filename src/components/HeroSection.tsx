@@ -116,19 +116,19 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
                 isActive ? 'scale-105' : 'scale-100'
               }`}
             />
-            {/* Cinematic Gradient Overlays */}
-            <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-black/40 to-black/60" />
-            <div className="absolute inset-0 bg-radial from-transparent via-black/20 to-black/70" />
+            {/* Cinematic Gradient Overlays - Optimized for mobile clarity */}
+            <div className="absolute inset-0 bg-gradient-to-t from-[#121212] via-black/30 to-black/50" />
+            <div className="absolute inset-0 bg-radial from-transparent via-black/15 to-black/60" />
           </div>
         );
       })}
 
       {/* Hero Content Overlay */}
-      <div className="relative z-20 max-w-5xl mx-auto px-6 text-center text-white pt-24 pb-28 md:py-36">
+      <div className="relative z-20 max-w-5xl mx-auto px-4 sm:px-6 text-center text-white pt-20 sm:pt-28 pb-32 sm:pb-36">
         {/* Tagline Badge */}
-        <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 mb-6 sm:mb-8 animate-fadeIn">
-          <Sparkles className="w-3.5 h-3.5 text-[#EAE7E2]" />
-          <span className="font-serif-en text-xs sm:text-sm tracking-[0.25em] uppercase text-[#EAE7E2]">
+        <div className="inline-flex items-center space-x-1.5 sm:space-x-2 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/25 mb-2.5 sm:mb-6 animate-fadeIn">
+          <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#EAE7E2]" />
+          <span className="font-serif-en text-[10px] sm:text-xs tracking-[0.2em] sm:tracking-[0.25em] uppercase text-[#EAE7E2]">
             <EditableText
               value={activeSlide.tagline}
               onSave={(val) => updateHeroSlide(activeSlide.id, { tagline: val })}
@@ -138,7 +138,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
         </div>
 
         {/* Sub Copy */}
-        <div className="font-serif-en text-sm sm:text-base md:text-lg tracking-[0.3em] uppercase text-white/90 mb-3 font-light">
+        <div className="font-serif-en text-[11px] sm:text-base md:text-lg tracking-[0.2em] sm:tracking-[0.3em] uppercase text-white/90 mb-1.5 sm:mb-3 font-light drop-shadow-xs">
           <EditableText
             value={activeSlide.subtitle}
             onSave={(val) => updateHeroSlide(activeSlide.id, { subtitle: val })}
@@ -147,7 +147,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
         </div>
 
         {/* Main Copy (Heading) */}
-        <h1 className="font-serif-kr text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-light leading-[1.25] sm:leading-[1.2] mb-6 text-balance tracking-tight">
+        <h1 className="font-serif-kr text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-light leading-[1.3] sm:leading-[1.2] mb-2 sm:mb-6 text-balance tracking-tight drop-shadow-md">
           <EditableText
             value={activeSlide.title}
             onSave={(val) => updateHeroSlide(activeSlide.id, { title: val })}
@@ -157,9 +157,9 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
         </h1>
 
         {/* Venue Information Pill */}
-        <div className="text-xs sm:text-sm text-white/70 font-light tracking-widest mb-10">
+        <div className="text-[10.5px] sm:text-sm text-white/75 font-light tracking-widest mb-5 sm:mb-10 drop-shadow-xs">
           LOCATION:{' '}
-          <span className="text-[#A68F7E] font-normal">
+          <span className="text-[#E2CBA9] font-normal">
             <EditableText
               value={activeSlide.venue}
               onSave={(val) => updateHeroSlide(activeSlide.id, { venue: val })}
@@ -168,20 +168,20 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
           </span>
         </div>
 
-        {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 max-w-md mx-auto">
+        {/* CTA Buttons - Compact & Side-by-Side on Mobile */}
+        <div className="flex flex-row items-center justify-center gap-2 sm:gap-6 max-w-sm sm:max-w-md mx-auto px-2">
           <button
             onClick={() => onNavigate('reservation')}
-            className="w-full sm:w-auto px-8 py-4 bg-[#1A1A1A] hover:bg-[#A68F7E] text-white border border-white/20 rounded-xs text-xs font-medium tracking-[0.2em] uppercase transition-all duration-300 shadow-lg hover:shadow-xl flex items-center justify-center space-x-3 group active:scale-[0.98]"
+            className="flex-1 sm:flex-none px-3.5 py-2.5 sm:px-8 sm:py-4 bg-[#1A1A1A]/90 hover:bg-[#A68F7E] text-white border border-white/20 rounded-full sm:rounded-xs text-[11px] sm:text-xs font-medium tracking-wider sm:tracking-[0.2em] uppercase transition-all duration-300 shadow-md hover:shadow-xl flex items-center justify-center space-x-1.5 sm:space-x-3 group active:scale-[0.98] whitespace-nowrap"
           >
-            <Calendar className="w-4 h-4 text-[#A68F7E] group-hover:text-white" />
+            <Calendar className="w-3.5 h-3.5 text-[#E2CBA9] group-hover:text-white shrink-0" />
             <span>예약 문의하기</span>
-            <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-3.5 h-3.5 transform group-hover:translate-x-1 transition-transform shrink-0 hidden xs:inline-block" />
           </button>
 
           <button
             onClick={() => onNavigate('gallery')}
-            className="w-full sm:w-auto px-8 py-4 bg-white/10 hover:bg-white/20 text-white border border-white/30 backdrop-blur-md rounded-xs text-xs font-medium tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center space-x-2 active:scale-[0.98]"
+            className="flex-1 sm:flex-none px-3.5 py-2.5 sm:px-8 sm:py-4 bg-white/15 hover:bg-white/25 text-white border border-white/30 backdrop-blur-md rounded-full sm:rounded-xs text-[11px] sm:text-xs font-medium tracking-wider sm:tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center space-x-1.5 active:scale-[0.98] whitespace-nowrap"
           >
             <span>포트폴리오 감상</span>
           </button>
@@ -206,15 +206,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
       </button>
 
       {/* Slide Indicators */}
-      <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-3">
+      <div className="absolute bottom-20 sm:bottom-24 left-1/2 -translate-x-1/2 z-30 flex items-center space-x-2 sm:space-x-3">
         {slides.map((_, idx) => (
           <button
             key={idx}
             onClick={() => setCurrentSlide(idx)}
             className={`transition-all duration-300 rounded-full ${
               idx === currentSlide
-                ? 'w-8 h-2 bg-[#A68F7E]'
-                : 'w-2 h-2 bg-white/40 hover:bg-white/70'
+                ? 'w-6 sm:w-8 h-1.5 sm:h-2 bg-[#E2CBA9]'
+                : 'w-1.5 sm:w-2 h-1.5 sm:h-2 bg-white/40 hover:bg-white/70'
             }`}
             aria-label={`슬라이드 ${idx + 1}로 이동`}
           />
@@ -222,23 +222,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onNavigate }) => {
       </div>
 
       {/* Bottom Brand Key Metrics / Feature Highlights Pill */}
-      <div className="absolute bottom-0 inset-x-0 z-20 bg-[#1A1A1A]/90 text-white pt-5 pb-4 border-t border-white/10 backdrop-blur-md">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6 text-white/90 text-center text-xs sm:text-sm">
-          <div className="flex items-center justify-center space-x-2 py-1">
-            <Camera className="w-4 h-4 text-[#A68F7E] shrink-0" />
-            <span className="font-medium text-white">본식 전문 <strong className="text-[#A68F7E] font-semibold">500+ 팀</strong> 전담 촬영</span>
+      <div className="absolute bottom-0 inset-x-0 z-20 bg-[#1A1A1A]/95 text-white pt-3.5 pb-3 sm:pt-5 sm:pb-4 border-t border-white/10 backdrop-blur-md">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 grid grid-cols-2 md:grid-cols-4 gap-1.5 sm:gap-3 md:gap-6 text-white/90 text-center text-[10px] sm:text-sm">
+          <div className="flex items-center justify-center space-x-1 sm:space-x-2 py-0.5 sm:py-1">
+            <Camera className="w-3 h-3 sm:w-4 sm:h-4 text-[#A68F7E] shrink-0" />
+            <span className="font-medium text-white truncate">본식 전문 <strong className="text-[#E2CBA9] font-semibold">500+ 팀</strong></span>
           </div>
-          <div className="flex items-center justify-center space-x-2 py-1">
-            <Award className="w-4 h-4 text-[#A68F7E] shrink-0" />
-            <span className="font-medium text-white"><strong className="text-[#A68F7E] font-semibold">100%</strong> 시그니처 색감</span>
+          <div className="flex items-center justify-center space-x-1 sm:space-x-2 py-0.5 sm:py-1">
+            <Award className="w-3 h-3 sm:w-4 sm:h-4 text-[#A68F7E] shrink-0" />
+            <span className="font-medium text-white truncate"><strong className="text-[#E2CBA9] font-semibold">100%</strong> 시그니처 색감</span>
           </div>
-          <div className="flex items-center justify-center space-x-2 py-1">
-            <ShieldCheck className="w-4 h-4 text-[#A68F7E] shrink-0" />
-            <span className="font-medium text-white">대표/실장 촬영 시스템</span>
+          <div className="flex items-center justify-center space-x-1 sm:space-x-2 py-0.5 sm:py-1">
+            <ShieldCheck className="w-3 h-3 sm:w-4 sm:h-4 text-[#A68F7E] shrink-0" />
+            <span className="font-medium text-white truncate">대표/실장 촬영 시스템</span>
           </div>
-          <div className="flex items-center justify-center space-x-2 py-1">
-            <Sparkles className="w-4 h-4 text-[#A68F7E] shrink-0" />
-            <span className="font-medium text-white">리뷰이벤트용 <strong className="text-[#A68F7E] font-semibold">7일 초고속</strong> 전송</span>
+          <div className="flex items-center justify-center space-x-1 sm:space-x-2 py-0.5 sm:py-1">
+            <Sparkles className="w-3 h-3 sm:w-4 sm:h-4 text-[#A68F7E] shrink-0" />
+            <span className="font-medium text-white truncate">이벤트용 <strong className="text-[#E2CBA9] font-semibold">7일 초고속</strong> 전송</span>
           </div>
         </div>
       </div>
