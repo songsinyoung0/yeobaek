@@ -250,31 +250,12 @@ export const GallerySection: React.FC = () => {
                 </div>
               )}
 
-              {/* Hover Overlay & Info */}
+              {/* Hover Overlay - Pure Minimal Effect without any text */}
               {!isAdminMode && (
                 <div
                   onClick={() => setActiveLightboxItem(item)}
-                  className="absolute inset-2 rounded-lg bg-gradient-to-t from-black/90 via-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-6 flex flex-col justify-end text-white"
-                >
-                  <div className="flex items-center space-x-2 text-[#A68F7E] text-xs font-serif-en uppercase tracking-widest mb-1.5">
-                    <Tag className="w-3 h-3" />
-                    <span>{item.categoryLabel}</span>
-                  </div>
-
-                  <h3 className="font-serif-kr text-lg font-medium mb-1 text-white">
-                    {item.title}
-                  </h3>
-
-                  <p className="flex items-center text-xs text-white/80 font-light mb-3">
-                    <MapPin className="w-3 h-3 mr-1 text-[#A68F7E]" />
-                    <span>{item.venue}</span>
-                  </p>
-
-                  <div className="flex items-center text-xs text-[#EAE7E2] font-serif-en tracking-wider">
-                    <span>VIEW FULL PHOTO</span>
-                    <Maximize2 className="w-3.5 h-3.5 ml-1.5" />
-                  </div>
-                </div>
+                  className="absolute inset-2 rounded-lg bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                />
               )}
             </div>
           ))}
