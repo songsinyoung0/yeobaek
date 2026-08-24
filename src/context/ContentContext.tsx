@@ -73,7 +73,7 @@ const DEFAULT_STUDIO_INFO: StudioInfo = {
   kakaoLink: 'https://pf.kakao.com/_AxdWxgn',
 };
 
-const STORAGE_KEY = 'yeobaek_site_content_v53';
+const STORAGE_KEY = 'yeobaek_site_content_v63';
 const INQUIRIES_STORAGE_KEY = 'yeobaek_inquiries_v1';
 
 interface ContentContextType {

@@ -53,31 +53,30 @@ html {
 .bento-card {
   background-color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.06);
-  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.3s ease;
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
   transform: translateZ(0);
+  -webkit-transform: translateZ(0);
   backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .bento-card:hover {
   border-color: rgba(0, 0, 0, 0.12);
-  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 8px 24px -6px rgba(0, 0, 0, 0.06);
 }
 
 /* Subtle image overlay & zoom with GPU acceleration */
 .img-zoom {
-  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+  transition: transform 0.4s ease-out;
   transform: translateZ(0);
+  -webkit-transform: translateZ(0);
   backface-visibility: hidden;
-  will-change: transform;
+  -webkit-backface-visibility: hidden;
 }
 
 .img-zoom:hover {
-  transform: scale(1.03) translateZ(0);
-}
-
-/* Smooth Image Loading */
-img {
-  content-visibility: auto;
+  transform: scale(1.025) translateZ(0);
+  -webkit-transform: scale(1.025) translateZ(0);
 }
 
 

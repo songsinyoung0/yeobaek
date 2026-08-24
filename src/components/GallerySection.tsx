@@ -11,7 +11,9 @@ export const GallerySection: React.FC = () => {
   const { content, isAdminMode, updateGalleryItem, addGalleryItem, deleteGalleryItem } = useSiteContent();
   const galleryItems = content.galleryItems;
 
+  const INITIAL_DISPLAY_COUNT = 12;
   const [selectedCategory, setSelectedCategory] = useState<GalleryCategory>('ALL');
+  const [visibleCount, setVisibleCount] = useState<number>(INITIAL_DISPLAY_COUNT);
   const [activeLightboxItem, setActiveLightboxItem] = useState<GalleryItem | null>(null);
   const [editingPhotoItem, setEditingPhotoItem] = useState<GalleryItem | null>(null);
 
@@ -47,6 +49,14 @@ export const GallerySection: React.FC = () => {
     selectedCategory === 'ALL'
       ? galleryItems
       : galleryItems.filter((item) => item.category === selectedCategory);
+
+  const displayedItems = filteredItems.slice(0, visibleCount);
+
+  // Handle category change: reset visible count to initial 12
+  const handleCategoryChange = (cat: GalleryCategory) => {
+    setSelectedCategory(cat);
+    setVisibleCount(INITIAL_DISPLAY_COUNT);
+  };
 
   // Lightbox navigation
   const currentLightboxIndex = activeLightboxItem
@@ -174,34 +184,34 @@ export const GallerySection: React.FC = () => {
       )}
 
         {/* Category Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3 mb-16">
+        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 mb-10 sm:mb-16">
           {categories.map((cat) => {
             const isActive = selectedCategory === cat.key;
             return (
               <button
                 key={cat.key}
-                onClick={() => setSelectedCategory(cat.key)}
-                className={`px-5 py-2.5 rounded-full text-xs sm:text-sm tracking-wider uppercase font-medium transition-all duration-300 ${
+                onClick={() => handleCategoryChange(cat.key)}
+                className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-sm tracking-wider uppercase font-medium transition-all duration-300 ${
                   isActive
                     ? 'bg-[#1A1A1A] text-white shadow-sm'
                     : 'bg-white text-[#555555] hover:bg-[#EAE7E2] hover:text-[#1A1A1A] border border-black/5'
                 }`}
               >
                 <span>{cat.label}</span>
-                <span className="ml-1.5 text-[10px] opacity-70 font-serif-en">({cat.enLabel})</span>
+                <span className="ml-1 sm:ml-1.5 text-[9px] sm:text-[10px] opacity-70 font-serif-en">({cat.enLabel})</span>
               </button>
             );
           })}
         </div>
 
-        {/* Gallery Bento Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
+        {/* Gallery Masonry Grid (Preserves natural horizontal/vertical aspect ratios for mobile & desktop) */}
+        <div className="columns-2 lg:columns-3 gap-3.5 sm:gap-6 [column-fill:_balance]">
+          {displayedItems.map((item) => (
             <div
               key={item.id}
-              className="bento-card group relative cursor-pointer overflow-hidden rounded-xl bg-white p-2 border border-black/5"
+              className="break-inside-avoid mb-3.5 sm:mb-6 bento-card group relative cursor-pointer overflow-hidden rounded-xl bg-white p-1.5 sm:p-2 border border-black/5 shadow-xs hover:shadow-md transition-all duration-300"
             >
-              {/* Image */}
+              {/* Image Container with Natural Aspect Ratio */}
               <div
                 onClick={() => {
                   if (isAdminMode) {
@@ -210,7 +220,9 @@ export const GallerySection: React.FC = () => {
                     setActiveLightboxItem(item);
                   }
                 }}
-                className="overflow-hidden aspect-4/3 sm:aspect-3/4 rounded-lg relative"
+                className={`overflow-hidden rounded-lg sm:rounded-xl relative bg-[#F3EFEA] ${
+                  item.aspectRatio === 'landscape' ? 'aspect-[4/3]' : 'aspect-[3/4]'
+                }`}
               >
                 <img
                   src={resolveImageUrl(item.imageUrl)}
@@ -218,11 +230,22 @@ export const GallerySection: React.FC = () => {
                   loading="lazy"
                   decoding="async"
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover img-zoom"
+                  className="w-full h-full block object-cover img-zoom"
                 />
+
+                {/* Subtle Ratio & Category Badge on Desktop Hover */}
+                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                  <span className="px-2 py-0.5 rounded-sm bg-black/75 text-white text-[10px] font-light backdrop-blur-xs">
+                    {item.venue}
+                  </span>
+                  <span className="px-1.5 py-0.5 rounded-sm bg-black/60 text-[#E2CBA9] text-[9px] font-serif-en uppercase tracking-wider">
+                    {item.categoryLabel}
+                  </span>
+                </div>
+
                 {isAdminMode && (
-                  <div className="absolute top-3 right-3 z-30 bg-black/85 text-amber-300 border border-amber-400/40 px-2.5 py-1 rounded-md text-[11px] font-medium flex items-center space-x-1 shadow-md">
-                    <ImageIcon className="w-3.5 h-3.5" />
+                  <div className="absolute top-2 right-2 sm:top-3 sm:right-3 z-30 bg-black/85 text-amber-300 border border-amber-400/40 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md text-[10px] sm:text-[11px] font-medium flex items-center space-x-1 shadow-md">
+                    <ImageIcon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span>📷 사진 변경</span>
                   </div>
                 )}
@@ -230,8 +253,8 @@ export const GallerySection: React.FC = () => {
 
               {/* Admin Delete Action */}
               {isAdminMode && (
-                <div className="p-2 border-t border-black/5 flex justify-between items-center bg-[#FAFAFA] rounded-b-lg">
-                  <span className="text-[11px] text-[#777777] truncate font-medium">
+                <div className="p-1.5 sm:p-2 mt-1 border-t border-black/5 flex justify-between items-center bg-[#FAFAFA] rounded-b-lg">
+                  <span className="text-[10px] sm:text-[11px] text-[#777777] truncate font-medium max-w-[120px] sm:max-w-none">
                     [{item.categoryLabel}] {item.title}
                   </span>
                   <button
@@ -241,25 +264,54 @@ export const GallerySection: React.FC = () => {
                         deleteGalleryItem(item.id);
                       }
                     }}
-                    className="p-1.5 text-red-500 hover:bg-red-50 rounded-md text-xs flex items-center space-x-1 transition-colors"
+                    className="p-1 sm:p-1.5 text-red-500 hover:bg-red-50 rounded-md text-[11px] sm:text-xs flex items-center space-x-1 transition-colors"
                     title="사진 삭제"
                   >
-                    <Trash2 className="w-3.5 h-3.5" />
+                    <Trash2 className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                     <span>삭제</span>
                   </button>
                 </div>
               )}
 
-              {/* Hover Overlay - Pure Minimal Effect without any text */}
+              {/* Hover Overlay - Pure Minimal Effect */}
               {!isAdminMode && (
                 <div
                   onClick={() => setActiveLightboxItem(item)}
-                  className="absolute inset-2 rounded-lg bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                  className="absolute inset-1.5 sm:inset-2 rounded-lg sm:rounded-xl bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
                 />
               )}
             </div>
           ))}
         </div>
+
+        {/* Load More Button (> 더보기) */}
+        {filteredItems.length > INITIAL_DISPLAY_COUNT && (
+          <div className="mt-10 sm:mt-16 flex flex-col items-center justify-center space-y-3">
+            {visibleCount < filteredItems.length ? (
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 12)}
+                className="group inline-flex items-center space-x-2.5 px-8 py-3.5 sm:px-10 sm:py-4 bg-[#1A1A1A] text-white hover:bg-[#A68F7E] rounded-full text-xs sm:text-sm font-medium tracking-wider uppercase transition-all duration-300 shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
+              >
+                <span>사진 더보기</span>
+                <span className="text-[11px] sm:text-xs text-[#E2CBA9] font-serif-en font-normal">
+                  ({Math.min(visibleCount, filteredItems.length)} / {filteredItems.length})
+                </span>
+                <ChevronRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  setVisibleCount(INITIAL_DISPLAY_COUNT);
+                  const el = document.getElementById('gallery');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="inline-flex items-center space-x-2 px-6 py-2.5 sm:px-8 sm:py-3 bg-white text-[#666666] hover:text-[#1A1A1A] hover:bg-[#EAE7E2] border border-black/10 rounded-full text-xs sm:text-sm font-medium tracking-wider transition-all shadow-xs cursor-pointer"
+              >
+                <span>처음 12장으로 접기</span>
+              </button>
+            )}
+          </div>
+        )}
 
         {filteredItems.length === 0 && (
           <div className="text-center py-16 text-[#888888] bg-white rounded-2xl border border-black/5">
