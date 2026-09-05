@@ -28,7 +28,7 @@ export const InquiriesInboxModal: React.FC<InquiriesInboxModalProps> = ({ isOpen
     }
   };
 
-  const getPackageName = (pkgId: string) => {
+  const getPackageName = (pkgId?: string) => {
     switch (pkgId) {
       case 'raw': return '원본형';
       case 'raw-retouched': return '원본 + 보정본형';
@@ -38,17 +38,35 @@ export const InquiriesInboxModal: React.FC<InquiriesInboxModalProps> = ({ isOpen
     }
   };
 
+  const getSafeData = (item: any) => {
+    const d = item.data || item || {};
+    return {
+      groomName: d.groomName || item.groomName || '',
+      brideName: d.brideName || item.brideName || '',
+      phone: d.phone || item.phone || '-',
+      email: d.email || item.email || '',
+      weddingDate: d.weddingDate || item.weddingDate || '-',
+      weddingTime: d.weddingTime || item.weddingTime || '12:00',
+      venueName: d.venueName || item.venueName || '-',
+      selectedPackage: d.selectedPackage || item.selectedPackage || 'raw',
+      priceType: d.priceType || item.priceType || 'NORMAL',
+      reviewEvent: d.reviewEvent || item.reviewEvent || 'JOIN',
+      specialRequests: d.specialRequests || item.specialRequests || '',
+    };
+  };
+
   const handleCopyInquiry = (item: InquiryItem) => {
+    const d = getSafeData(item);
     const text = `[여백스튜디오 예약 문의]
-접수번호: ${item.referenceNumber} (${item.submittedAt})
-신랑 ${item.data.groomName || '-'} / 신부 ${item.data.brideName || '-'}
-연락처: ${item.data.phone}
-이메일: ${item.data.email || '미입력'}
-예식일: ${item.data.weddingDate} (${item.data.weddingTime})
-장소: ${item.data.venueName}
-상품: ${getPackageName(item.data.selectedPackage)} [${item.data.priceType === 'WESTERN' ? '웨스턴 혜택가' : '일반가'}]
-리뷰이벤트: ${item.data.reviewEvent === 'JOIN' ? '참여함' : '미참여'}
-요청사항: ${item.data.specialRequests || '없음'}`;
+접수번호: ${item.referenceNumber || 'YB-000000'} (${item.submittedAt || ''})
+신랑 ${d.groomName || '-'} / 신부 ${d.brideName || '-'}
+연락처: ${d.phone}
+이메일: ${d.email || '미입력'}
+예식일: ${d.weddingDate} (${d.weddingTime})
+장소: ${d.venueName}
+상품: ${getPackageName(d.selectedPackage)} [${d.priceType === 'WESTERN' ? '웨스턴 혜택가' : '일반가'}]
+리뷰이벤트: ${d.reviewEvent === 'JOIN' ? '참여함' : '미참여'}
+요청사항: ${d.specialRequests || '없음'}`;
 
     navigator.clipboard.writeText(text);
     setCopiedId(item.id);
@@ -97,7 +115,9 @@ export const InquiriesInboxModal: React.FC<InquiriesInboxModalProps> = ({ isOpen
             </div>
           ) : (
             <div className="space-y-4">
-              {inquiries.map((item) => (
+              {inquiries.map((item) => {
+                const d = getSafeData(item);
+                return (
                 <div
                   key={item.id}
                   className={`bg-white rounded-xl p-5 border transition-all ${
@@ -110,7 +130,7 @@ export const InquiriesInboxModal: React.FC<InquiriesInboxModalProps> = ({ isOpen
                     <div className="flex items-center space-x-2">
                       {getStatusBadge(item.status)}
                       <span className="font-serif-en text-xs font-bold text-[#A68F7E]">
-                        {item.referenceNumber}
+                        {item.referenceNumber || 'YB-000000'}
                       </span>
                       <span className="text-[11px] text-[#888888] flex items-center">
                         <Clock className="w-3 h-3 mr-1" />
@@ -154,40 +174,40 @@ export const InquiriesInboxModal: React.FC<InquiriesInboxModalProps> = ({ isOpen
                     <div>
                       <span className="text-[#888888] block text-[11px]">성함 (신랑 / 신부)</span>
                       <strong className="text-[#1A1A1A] text-sm">
-                        신랑 {item.data.groomName || '-'} / 신부 {item.data.brideName || '-'}
+                        신랑 {d.groomName || '-'} / 신부 {d.brideName || '-'}
                       </strong>
                     </div>
 
                     <div>
                       <span className="text-[#888888] block text-[11px]">연락처</span>
-                      <a href={`tel:${item.data.phone}`} className="text-[#1A1A1A] hover:underline font-medium">
-                        {item.data.phone}
+                      <a href={`tel:${d.phone}`} className="text-[#1A1A1A] hover:underline font-medium">
+                        {d.phone}
                       </a>
                     </div>
 
                     <div>
                       <span className="text-[#888888] block text-[11px]">이메일</span>
-                      <span className="text-[#1A1A1A]">{item.data.email || '미입력'}</span>
+                      <span className="text-[#1A1A1A]">{d.email || '미입력'}</span>
                     </div>
 
                     <div>
                       <span className="text-[#888888] block text-[11px]">예식 일시</span>
                       <span className="text-[#1A1A1A] font-medium">
-                        {item.data.weddingDate} ({item.data.weddingTime})
+                        {d.weddingDate} ({d.weddingTime})
                       </span>
                     </div>
 
                     <div>
                       <span className="text-[#888888] block text-[11px]">예식 장소</span>
-                      <span className="text-[#1A1A1A] font-medium">{item.data.venueName}</span>
+                      <span className="text-[#1A1A1A] font-medium">{d.venueName}</span>
                     </div>
 
                     <div>
                       <span className="text-[#888888] block text-[11px]">선택 패키지</span>
                       <span className="text-[#1A1A1A] font-bold">
-                        {getPackageName(item.data.selectedPackage)}
+                        {getPackageName(d.selectedPackage)}
                         <span className="font-normal text-[11px] text-[#888888] ml-1">
-                          ({item.data.priceType === 'WESTERN' ? '웨스턴 혜택가' : '일반가'})
+                          ({d.priceType === 'WESTERN' ? '웨스턴 혜택가' : '일반가'})
                         </span>
                       </span>
                     </div>
@@ -198,14 +218,14 @@ export const InquiriesInboxModal: React.FC<InquiriesInboxModalProps> = ({ isOpen
                     <span className="text-[#666666] flex items-center">
                       <Gift className="w-3.5 h-3.5 mr-1 text-[#A68F7E]" />
                       <span>리뷰 이벤트:</span>
-                      <strong className={`ml-1 ${item.data.reviewEvent === 'JOIN' ? 'text-emerald-700' : 'text-gray-500'}`}>
-                        {item.data.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송 혜택)' : '참여 안함'}
+                      <strong className={`ml-1 ${d.reviewEvent === 'JOIN' ? 'text-emerald-700' : 'text-gray-500'}`}>
+                        {d.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송 혜택)' : '참여 안함'}
                       </strong>
                     </span>
 
-                    {item.data.email && (
+                    {d.email && (
                       <a
-                        href={`mailto:${item.data.email}?subject=${encodeURIComponent(`[여백스튜디오] ${item.data.groomName || item.data.brideName}님 예식 스냅 일정 안내`)}`}
+                        href={`mailto:${d.email}?subject=${encodeURIComponent(`[여백스튜디오] ${d.groomName || d.brideName}님 예식 스냅 일정 안내`)}`}
                         className="text-amber-800 hover:underline flex items-center space-x-1 text-[11px] font-medium"
                       >
                         <Mail className="w-3 h-3" />
@@ -215,10 +235,10 @@ export const InquiriesInboxModal: React.FC<InquiriesInboxModalProps> = ({ isOpen
                   </div>
 
                   {/* Special Requests */}
-                  {item.data.specialRequests && (
+                  {d.specialRequests && (
                     <div className="mt-2.5 p-2.5 bg-[#FAF9F5] rounded-lg border border-black/5 text-xs text-[#555555]">
                       <span className="font-semibold text-[#1A1A1A] block mb-0.5">요청사항:</span>
-                      <p className="font-light leading-relaxed whitespace-pre-wrap">{item.data.specialRequests}</p>
+                      <p className="font-light leading-relaxed whitespace-pre-wrap">{d.specialRequests}</p>
                     </div>
                   )}
 
@@ -228,7 +248,8 @@ export const InquiriesInboxModal: React.FC<InquiriesInboxModalProps> = ({ isOpen
                     </div>
                   )}
                 </div>
-              ))}
+              );
+              })}
             </div>
           )}
         </div>

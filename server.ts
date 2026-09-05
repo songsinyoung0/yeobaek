@@ -23,6 +23,137 @@ async function startServer() {
     res.json({ status: 'ok' });
   });
 
+  // Inquiries persistent storage directory
+  const dataDir = path.join(process.cwd(), 'data');
+  if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+  }
+  const inquiriesFile = path.join(dataDir, 'inquiries.json');
+
+  // Submit Inquiry Endpoint: Saves to server disk and dispatches email directly to representative
+  app.post('/api/send-inquiry', async (req, res) => {
+    try {
+      const inquiry = req.body;
+      const refNum = inquiry.referenceNumber || ('YB-' + Math.floor(100000 + Math.random() * 900000));
+      const now = new Date().toLocaleString('ko-KR', {
+        timeZone: 'Asia/Seoul',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+
+      // 1. Save to local data/inquiries.json for backup
+      let existingInquiries: any[] = [];
+      try {
+        if (fs.existsSync(inquiriesFile)) {
+          const content = fs.readFileSync(inquiriesFile, 'utf-8');
+          existingInquiries = JSON.parse(content);
+        }
+      } catch {
+        existingInquiries = [];
+      }
+      const record = {
+        id: 'inq_' + Date.now(),
+        referenceNumber: refNum,
+        submittedAt: now,
+        status: 'NEW',
+        data: inquiry,
+        ...inquiry,
+      };
+      existingInquiries.unshift(record);
+      fs.writeFileSync(inquiriesFile, JSON.stringify(existingInquiries, null, 2), 'utf-8');
+
+      // 2. Format email body
+      const subject = `[여백스튜디오 신규 예약문의] ${inquiry.groomName || inquiry.brideName || '고객'}님 (${inquiry.weddingDate || '일정미정'} 예식)`;
+      const emailPayload = {
+        _subject: subject,
+        _replyto: inquiry.email || 'yeobaek5795@naver.com',
+        접수번호: refNum,
+        접수일시: now,
+        신랑성함: inquiry.groomName || '-',
+        신부성함: inquiry.brideName || '-',
+        연락처: inquiry.phone || '-',
+        고객이메일: inquiry.email || '미입력',
+        예식일자: inquiry.weddingDate || '-',
+        예식시간: inquiry.weddingTime || '12:00',
+        예식장소: inquiry.venueName || '-',
+        선택상품: inquiry.packageName || inquiry.selectedPackage || '-',
+        적용가격: inquiry.priceText || '-',
+        리뷰이벤트: inquiry.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송)' : '참여 안함',
+        요청사항: inquiry.specialRequests || '없음',
+      };
+
+      // 3. Dispatch to representative emails (Gmail: tlsdud3071@gmail.com, Naver: yeobaek5795@naver.com)
+      const targetEmails = ['tlsdud3071@gmail.com', 'yeobaek5795@naver.com'];
+      const sendPromises = targetEmails.map(async (email) => {
+        try {
+          const resp = await fetch(`https://formsubmit.co/ajax/${email}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: JSON.stringify(emailPayload),
+          });
+          return { email, ok: resp.ok };
+        } catch (err) {
+          console.warn(`[Inquiry Mail Notice] Failed to send to ${email}:`, err);
+          return { email, ok: false };
+        }
+      });
+
+      await Promise.allSettled(sendPromises);
+      console.log(`[Inquiry Recorded] Ref: ${refNum}, Couple: ${inquiry.groomName || '-'}/${inquiry.brideName || '-'}, Date: ${inquiry.weddingDate}`);
+
+      return res.json({
+        success: true,
+        referenceNumber: refNum,
+        submittedAt: now,
+      });
+    } catch (err: any) {
+      console.error('[Inquiry Error]', err);
+      return res.status(500).json({ error: err?.message || 'Failed to process inquiry' });
+    }
+  });
+
+  // Get Inquiries endpoint for admin panel
+  app.get('/api/inquiries', (_req, res) => {
+    try {
+      if (fs.existsSync(inquiriesFile)) {
+        const content = fs.readFileSync(inquiriesFile, 'utf-8');
+        const list = JSON.parse(content);
+        const normalized = Array.isArray(list)
+          ? list.map((item: any) => ({
+              id: item.id || 'inq_' + Math.random(),
+              referenceNumber: item.referenceNumber || 'YB-000000',
+              submittedAt: item.submittedAt || '',
+              status: item.status || 'NEW',
+              data: item.data || {
+                groomName: item.groomName || '',
+                brideName: item.brideName || '',
+                phone: item.phone || '',
+                email: item.email || '',
+                weddingDate: item.weddingDate || '',
+                weddingTime: item.weddingTime || '12:00',
+                venueName: item.venueName || '',
+                selectedPackage: item.selectedPackage || 'raw',
+                priceType: item.priceType || 'NORMAL',
+                reviewEvent: item.reviewEvent || 'JOIN',
+                specialRequests: item.specialRequests || '',
+                agreeToTerms: true,
+              },
+            }))
+          : [];
+        return res.json({ inquiries: normalized });
+      }
+      return res.json({ inquiries: [] });
+    } catch {
+      return res.json({ inquiries: [] });
+    }
+  });
+
   // Dedicated direct image upload endpoint: accepts base64 and saves directly to disk
   app.post('/api/upload-image', (req, res) => {
     try {

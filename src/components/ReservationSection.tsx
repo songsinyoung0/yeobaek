@@ -6,21 +6,14 @@ import {
   User,
   Phone,
   Mail,
-  FileText,
   CheckCircle2,
-  Copy,
-  Sparkles,
   Send,
   RefreshCw,
-  Check,
-  MessageSquare,
-  MailCheck,
-  ShieldCheck,
   X,
   Gift,
   Tag,
-  ExternalLink,
-  Inbox
+  Sparkles,
+  FileText,
 } from 'lucide-react';
 import { ReservationFormData, InquiryResult } from '../types';
 import { useSiteContent } from '../context/ContentContext';
@@ -51,10 +44,6 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
   const [errors, setErrors] = useState<Partial<Record<keyof ReservationFormData, string>>>({});
   const [inquiryResult, setInquiryResult] = useState<InquiryResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [emailTab, setEmailTab] = useState<'summary' | 'email' | 'delivery'>('summary');
-  const [isResendingEmail, setIsResendingEmail] = useState(false);
-  const [emailResentSuccess, setEmailResentSuccess] = useState(false);
 
   useEffect(() => {
     if (selectedPackageId) {
@@ -113,6 +102,7 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
 
     const refNum = 'YB-' + Math.floor(100000 + Math.random() * 900000);
     const now = new Date().toLocaleString('ko-KR', {
+      timeZone: 'Asia/Seoul',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -120,22 +110,53 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
       minute: '2-digit',
     });
 
-    // 1. Save inquiry to local state & storage for internal admin inbox
-    addInquiry(formData, refNum);
-
     const pkgDetails = getPackageDetails(formData.selectedPackage, formData.priceType);
 
-    // 2. Dispatch live email via FormSubmit API directly to yeobaek5795@naver.com
+    // 1. Save inquiry to internal admin inbox
+    addInquiry(formData, refNum);
+
+    const inquiryPayload = {
+      referenceNumber: refNum,
+      submittedAt: now,
+      groomName: formData.groomName,
+      brideName: formData.brideName,
+      phone: formData.phone,
+      email: formData.email,
+      weddingDate: formData.weddingDate,
+      weddingTime: formData.weddingTime,
+      venueName: formData.venueName,
+      selectedPackage: formData.selectedPackage,
+      packageName: pkgDetails.name,
+      priceType: formData.priceType,
+      priceText: pkgDetails.priceText,
+      reviewEvent: formData.reviewEvent,
+      specialRequests: formData.specialRequests,
+    };
+
+    // 2. Dispatch via server-side endpoint (sends to tlsdud3071@gmail.com and yeobaek5795@naver.com)
     try {
-      await fetch(`https://formsubmit.co/ajax/${studioInfo.email || 'yeobaek5795@naver.com'}`, {
+      await fetch('/api/send-inquiry', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(inquiryPayload),
+      });
+    } catch (err) {
+      console.warn('Server inquiry dispatch notice:', err);
+    }
+
+    // 3. Fallback client-side direct email dispatch to tlsdud3071@gmail.com
+    try {
+      fetch('https://formsubmit.co/ajax/tlsdud3071@gmail.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
         body: JSON.stringify({
-          _subject: `[신규 예약문의] ${formData.groomName || formData.brideName}님 - ${formData.weddingDate} 예식 스냅`,
-          _replyto: formData.email || studioInfo.email,
+          _subject: `[여백스튜디오 예약문의] ${formData.groomName || formData.brideName}님 (${formData.weddingDate} 예식)`,
+          _replyto: formData.email || 'tlsdud3071@gmail.com',
           접수번호: refNum,
           접수일시: now,
           신랑성함: formData.groomName || '-',
@@ -145,15 +166,12 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
           예식일자: formData.weddingDate,
           예식시간: formData.weddingTime,
           예식장소: formData.venueName,
-          선택상품: pkgDetails.name,
-          적용가격: pkgDetails.priceText,
+          선택상품: `${pkgDetails.name} [${pkgDetails.priceText}]`,
           리뷰이벤트: formData.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송)' : '참여 안함',
           요청사항: formData.specialRequests || '없음',
         }),
-      });
-    } catch (err) {
-      console.warn('FormSubmit AJAX dispatch notice:', err);
-    }
+      }).catch(() => {});
+    } catch {}
 
     setInquiryResult({
       referenceNumber: refNum,
@@ -161,18 +179,6 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
       data: { ...formData },
     });
     setIsSubmitting(false);
-    setEmailTab('summary');
-  };
-
-  const handleResendEmail = () => {
-    setIsResendingEmail(true);
-    setEmailResentSuccess(false);
-
-    setTimeout(() => {
-      setIsResendingEmail(false);
-      setEmailResentSuccess(true);
-      setTimeout(() => setEmailResentSuccess(false), 3000);
-    }, 800);
   };
 
   const getPackageDetails = (pkgId: string, priceType: 'NORMAL' | 'WESTERN') => {
@@ -205,27 +211,7 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
     }
   };
 
-  const copyInquirySummary = () => {
-    if (!inquiryResult) return;
-    const pkgInfo = getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType);
-    const text = `[여백스튜디오 본식 스냅 예약 문의 접수]
-접수번호: ${inquiryResult.referenceNumber}
-성함: 신랑 ${inquiryResult.data.groomName || '-'} / 신부 ${inquiryResult.data.brideName || '-'}
-연락처: ${inquiryResult.data.phone}
-이메일: ${inquiryResult.data.email || '미입력'}
-예식일시: ${inquiryResult.data.weddingDate} (${inquiryResult.data.weddingTime})
-예식장소: ${inquiryResult.data.venueName}
-선택상품: ${pkgInfo.name} [${pkgInfo.priceText}]
-리뷰이벤트: ${inquiryResult.data.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송 혜택)' : '참여 안함'}
-요청사항: ${inquiryResult.data.specialRequests || '없음'}`;
-
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2500);
-  };
-
   const currentPkgInfo = getPackageDetails(formData.selectedPackage, formData.priceType);
-  const targetEmail = formData.email.trim() || `${formData.groomName || formData.brideName || 'customer'}@wedding-guest.com`;
 
   return (
     <section id="reservation" className="py-24 sm:py-32 bg-[#F5F3EF] border-t border-black/5 relative">
@@ -573,7 +559,7 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
               {isSubmitting ? (
                 <div className="flex items-center space-x-2">
                   <RefreshCw className="w-4 h-4 animate-spin text-[#A68F7E]" />
-                  <span>대표 이메일(yeobaek5795@naver.com)로 예약 문의 전달 중...</span>
+                  <span>예약 문의 안전하게 전달 중...</span>
                 </div>
               ) : (
                 <>
@@ -586,288 +572,112 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
         </div>
       </div>
 
-      {/* Booking Confirmation Popup Modal & Email Simulator */}
+      {/* Booking Confirmation Popup Modal - Clean & Simple for Wedding Clients */}
       {inquiryResult && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-fadeIn overflow-y-auto">
-          <div className="max-w-2xl w-full bg-white rounded-2xl border border-black/10 p-6 sm:p-8 text-[#1A1A1A] shadow-2xl relative my-auto max-h-[90vh] flex flex-col justify-between overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 animate-fadeIn overflow-y-auto">
+          <div className="max-w-lg w-full bg-white rounded-2xl border border-black/10 p-6 sm:p-8 text-[#1A1A1A] shadow-2xl relative my-auto animate-scaleUp">
             {/* Close Button */}
             <button
               onClick={() => setInquiryResult(null)}
-              className="absolute top-5 right-5 p-2 rounded-full text-[#888888] hover:text-[#1A1A1A] hover:bg-[#F5F3EF] transition-colors"
+              className="absolute top-4 right-4 p-2 rounded-full text-[#888888] hover:text-[#1A1A1A] hover:bg-[#F5F3EF] transition-colors"
               aria-label="닫기"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div>
-              {/* Header Badge & Title */}
-              <div className="text-center mb-6">
-                <div className="w-14 h-14 bg-[#A68F7E]/15 text-[#A68F7E] rounded-full flex items-center justify-center mx-auto mb-3">
-                  <CheckCircle2 className="w-8 h-8" />
-                </div>
-                <p className="font-serif-en text-xs tracking-[0.25em] text-[#A68F7E] uppercase mb-1 font-semibold">
-                  BOOKING INQUIRY SUBMITTED SUCCESSFULLY
-                </p>
-                <h3 className="font-serif-kr text-2xl sm:text-3xl font-light text-[#1A1A1A]">
-                  예약 문의가 정상 접수되었습니다
-                </h3>
-                <p className="text-xs text-[#777777] font-light mt-1">
-                  접수 일시: {inquiryResult.submittedAt} (접수번호: {inquiryResult.referenceNumber})
-                </p>
+            {/* Success Icon & Title */}
+            <div className="text-center mb-6 pt-1">
+              <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 shadow-xs">
+                <CheckCircle2 className="w-9 h-9 text-emerald-600" />
+              </div>
+              <p className="font-serif-en text-[11px] tracking-[0.25em] text-[#A68F7E] uppercase mb-1 font-semibold">
+                INQUIRY RECEIVED
+              </p>
+              <h3 className="font-serif-kr text-2xl sm:text-3xl font-light text-[#1A1A1A] mb-2">
+                예약 문의가 정상 접수되었습니다
+              </h3>
+              <p className="text-xs sm:text-sm text-[#666666] font-light leading-relaxed max-w-sm mx-auto">
+                대표 작가에게 문의 내용이 안전하게 전달되었습니다.<br />
+                남겨주신 연락처로 <strong className="text-[#1A1A1A] font-medium">24시간 이내</strong>에 확인 안내를 드리겠습니다.
+              </p>
+            </div>
+
+            {/* Clean Receipt Summary Card */}
+            <div className="bg-[#FAF9F6] rounded-xl p-4 sm:p-5 border border-black/5 text-xs text-[#444444] space-y-2.5 mb-6">
+              <div className="flex items-center justify-between pb-2 border-b border-black/5">
+                <span className="text-[#888888]">접수 번호</span>
+                <span className="font-serif-en font-bold text-[#A68F7E] tracking-wider text-xs">
+                  {inquiryResult.referenceNumber}
+                </span>
               </div>
 
-              {/* Delivery Destination Explanation Box */}
-              <div className="bg-amber-50/70 rounded-xl p-4 mb-6 border border-amber-200/60 text-xs text-amber-950 space-y-2">
-                <div className="flex items-center space-x-2 font-bold text-amber-900 text-sm">
-                  <Inbox className="w-4 h-4 text-amber-700 shrink-0" />
-                  <span>💡 대표님 이메일 및 시스템 수신 경로 안내</span>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                <div>
+                  <span className="text-[#888888] block text-[11px]">신랑 / 신부</span>
+                  <span className="font-medium text-[#1A1A1A]">
+                    {inquiryResult.data.groomName ? `신랑 ${inquiryResult.data.groomName}` : ''}
+                    {inquiryResult.data.groomName && inquiryResult.data.brideName ? ' / ' : ''}
+                    {inquiryResult.data.brideName ? `신부 ${inquiryResult.data.brideName}` : ''}
+                  </span>
                 </div>
-                <p className="leading-relaxed font-normal">
-                  고객님이 제출하신 예약 문의는 <strong>대표자 이메일({studioInfo.email})</strong> 및 사이트 내 <strong>'예약 문의 관리 수신함'</strong>에 자동 기록되었습니다.
-                </p>
-                <div className="pt-2 border-t border-amber-200/50 flex flex-wrap gap-2 text-[11px]">
-                  <a
-                    href={`mailto:${studioInfo.email}?subject=${encodeURIComponent(`[예약문의] ${inquiryResult.data.groomName || inquiryResult.data.brideName}님 (${inquiryResult.data.weddingDate})`)}&body=${encodeURIComponent(`접수번호: ${inquiryResult.referenceNumber}\n성함: ${inquiryResult.data.groomName} / ${inquiryResult.data.brideName}\n연락처: ${inquiryResult.data.phone}\n예식일: ${inquiryResult.data.weddingDate} (${inquiryResult.data.weddingTime})\n장소: ${inquiryResult.data.venueName}\n선택상품: ${getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).name}`)}`}
-                    className="px-3 py-1.5 bg-amber-700 hover:bg-amber-800 text-white rounded-lg font-medium inline-flex items-center space-x-1 transition-colors"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    <span>네이버 메일로 바로 전달하기</span>
-                    <ExternalLink className="w-3 h-3 ml-0.5" />
-                  </a>
-                  <a
-                    href={studioInfo.kakaoLink || "https://pf.kakao.com/_AxdWxgn"}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="px-3 py-1.5 bg-[#FFE812] text-[#3B1E1E] hover:bg-yellow-300 rounded-lg font-bold inline-flex items-center space-x-1 transition-colors"
-                  >
-                    <KakaoIcon className="w-3.5 h-3.5 fill-current" />
-                    <span>카카오톡 채널 1:1 상담 연결</span>
-                  </a>
+                <div>
+                  <span className="text-[#888888] block text-[11px]">연락처</span>
+                  <span className="font-medium text-[#1A1A1A]">{inquiryResult.data.phone}</span>
+                </div>
+                <div>
+                  <span className="text-[#888888] block text-[11px]">예식 일시</span>
+                  <span className="font-medium text-[#1A1A1A]">
+                    {inquiryResult.data.weddingDate} ({inquiryResult.data.weddingTime})
+                  </span>
+                </div>
+                <div>
+                  <span className="text-[#888888] block text-[11px]">예식 장소</span>
+                  <span className="font-medium text-[#1A1A1A] truncate block">{inquiryResult.data.venueName}</span>
                 </div>
               </div>
 
-              {/* Tab Selector */}
-              <div className="flex items-center space-x-2 border-b border-black/10 pb-3 mb-6">
-                <button
-                  onClick={() => setEmailTab('summary')}
-                  className={`px-4 py-2 rounded-lg text-xs font-medium tracking-wider uppercase transition-colors flex items-center space-x-1.5 ${
-                    emailTab === 'summary'
-                      ? 'bg-[#1A1A1A] text-white shadow-xs'
-                      : 'bg-[#F5F3EF] text-[#666666] hover:bg-[#EAE7E2] hover:text-[#1A1A1A]'
-                  }`}
-                >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>예약 접수 요약</span>
-                </button>
-
-                <button
-                  onClick={() => setEmailTab('email')}
-                  className={`px-4 py-2 rounded-lg text-xs font-medium tracking-wider uppercase transition-colors flex items-center space-x-1.5 relative ${
-                    emailTab === 'email'
-                      ? 'bg-[#1A1A1A] text-white shadow-xs'
-                      : 'bg-[#F5F3EF] text-[#666666] hover:bg-[#EAE7E2] hover:text-[#1A1A1A]'
-                  }`}
-                >
-                  <Mail className="w-3.5 h-3.5" />
-                  <span>대표자 수신 이메일 양식</span>
-                  <span className="w-2 h-2 rounded-full bg-[#A68F7E] animate-pulse"></span>
-                </button>
-
-                <button
-                  onClick={() => setEmailTab('delivery')}
-                  className={`px-4 py-2 rounded-lg text-xs font-medium tracking-wider uppercase transition-colors flex items-center space-x-1.5 ${
-                    emailTab === 'delivery'
-                      ? 'bg-[#1A1A1A] text-white shadow-xs'
-                      : 'bg-[#F5F3EF] text-[#666666] hover:bg-[#EAE7E2] hover:text-[#1A1A1A]'
-                  }`}
-                >
-                  <ShieldCheck className="w-3.5 h-3.5" />
-                  <span>전달 방법 가이드</span>
-                </button>
+              <div className="pt-2 border-t border-black/5">
+                <span className="text-[#888888] block text-[11px]">선택 상품</span>
+                <span className="font-medium text-[#1A1A1A]">
+                  {getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).name}
+                  <span className="text-[#A68F7E] ml-1 font-normal">
+                    ({getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).priceText})
+                  </span>
+                </span>
               </div>
 
-              {/* Tab 1: On-screen Summary */}
-              {emailTab === 'summary' && (
-                <div className="space-y-4 animate-fadeIn">
-                  <div className="bg-[#F5F3EF] p-5 rounded-xl border border-black/5 space-y-3 text-xs text-[#444444]">
-                    <div className="flex justify-between border-b border-black/10 pb-2.5">
-                      <span className="font-medium text-[#1A1A1A]">고유 접수 번호</span>
-                      <span className="font-serif-en font-bold text-[#A68F7E] tracking-wider text-sm">
-                        {inquiryResult.referenceNumber}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <div>
-                        <span className="text-[#888888] block text-[11px]">신랑 / 신부</span>
-                        <span className="font-medium text-[#1A1A1A]">
-                          신랑 {inquiryResult.data.groomName || '-'} / 신부 {inquiryResult.data.brideName || '-'}
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-[#888888] block text-[11px]">연락처</span>
-                        <span className="font-medium text-[#1A1A1A]">{inquiryResult.data.phone}</span>
-                      </div>
-
-                      <div>
-                        <span className="text-[#888888] block text-[11px]">예식 일시</span>
-                        <span className="font-medium text-[#1A1A1A]">
-                          {inquiryResult.data.weddingDate} ({inquiryResult.data.weddingTime})
-                        </span>
-                      </div>
-
-                      <div>
-                        <span className="text-[#888888] block text-[11px]">예식 장소</span>
-                        <span className="font-medium text-[#1A1A1A]">{inquiryResult.data.venueName}</span>
-                      </div>
-                    </div>
-
-                    <div className="border-t border-black/5 pt-2.5">
-                      <span className="text-[#888888] block text-[11px]">선택 상품 및 가격 구분</span>
-                      <span className="font-medium text-[#1A1A1A]">
-                        {getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).name} (
-                        {getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).priceText})
-                      </span>
-                    </div>
-
-                    <div className="border-t border-black/5 pt-2.5">
-                      <span className="text-[#888888] block text-[11px]">리뷰 이벤트 참여</span>
-                      <span className="font-medium text-emerald-700">
-                        {inquiryResult.data.reviewEvent === 'JOIN'
-                          ? '🎁 참여함 (보정본 5~10장 우선 발송 혜택)'
-                          : '참여 안함'}
-                      </span>
-                    </div>
-
-                    {inquiryResult.data.specialRequests && (
-                      <div className="border-t border-black/5 pt-2.5">
-                        <span className="text-[#888888] block text-[11px]">요청사항</span>
-                        <span className="text-[#333333] font-light">{inquiryResult.data.specialRequests}</span>
-                      </div>
-                    )}
-                  </div>
+              {inquiryResult.data.reviewEvent === 'JOIN' && (
+                <div className="pt-2 border-t border-black/5 flex items-center justify-between text-[11px]">
+                  <span className="text-[#888888]">리뷰 이벤트</span>
+                  <span className="font-medium text-emerald-700">🎁 참여 (보정본 5~10장 우선 발송)</span>
                 </div>
               )}
 
-              {/* Tab 2: Email Format Preview */}
-              {emailTab === 'email' && (
-                <div className="space-y-4 animate-fadeIn">
-                  <div className="bg-[#1A1A1A] text-white p-4 rounded-t-xl border-b border-white/10 text-xs font-serif-en space-y-1.5">
-                    <div className="flex justify-between items-center text-white/60 text-[11px]">
-                      <span>TO: {studioInfo.email} (대표 메일)</span>
-                      <span>STATUS: RECORDED</span>
-                    </div>
-                    <div className="text-white font-medium">REPLY-TO: {targetEmail}</div>
-                    <div className="text-[#A68F7E] font-sans text-xs pt-1 border-t border-white/10">
-                      SUBJECT: [신규 예약 문의] {inquiryResult.data.groomName || inquiryResult.data.brideName}님 - {inquiryResult.data.weddingDate} 예식 스냅
-                    </div>
-                  </div>
-
-                  <div className="bg-[#F5F3EF] p-6 rounded-b-xl border border-black/10 text-xs text-[#333333] space-y-4 font-sans leading-relaxed">
-                    <div className="flex items-center justify-between border-b border-black/10 pb-4">
-                      <div>
-                        <h4 className="font-serif-kr text-lg font-semibold text-[#1A1A1A]">여백스튜디오 대표 수신용 내역</h4>
-                        <p className="font-serif-en text-[10px] text-[#A68F7E] uppercase tracking-widest">Inquiry Details</p>
-                      </div>
-                      <Sparkles className="w-5 h-5 text-[#A68F7E]" />
-                    </div>
-
-                    <div className="bg-white p-4 rounded-lg border border-black/5 space-y-2">
-                      <p className="font-medium text-[#1A1A1A] border-b border-black/5 pb-1">📌 고객 접수 정보</p>
-                      <p>• 접수 번호: <strong>{inquiryResult.referenceNumber}</strong></p>
-                      <p>• 신랑/신부: {inquiryResult.data.groomName || '-'} / {inquiryResult.data.brideName || '-'}</p>
-                      <p>• 연락처: {inquiryResult.data.phone}</p>
-                      <p>• 이메일: {inquiryResult.data.email || '미입력'}</p>
-                      <p>• 예식 일시: {inquiryResult.data.weddingDate} ({inquiryResult.data.weddingTime})</p>
-                      <p>• 예식 장소: {inquiryResult.data.venueName}</p>
-                      <p>• 선택 상품: {getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).name}</p>
-                      <p>• 적용 가격: {getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).priceText}</p>
-                      <p>• 리뷰 이벤트: {inquiryResult.data.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송)' : '참여 안함'}</p>
-                    </div>
-
-                    <div className="pt-2 flex items-center justify-between">
-                      <span className="text-[11px] text-[#888888]">고객센터: {studioInfo.phone}</span>
-                      <button
-                        onClick={handleResendEmail}
-                        disabled={isResendingEmail}
-                        className="px-3 py-1.5 bg-[#1A1A1A] hover:bg-[#A68F7E] text-white rounded-md text-[11px] font-medium flex items-center space-x-1.5 transition-colors"
-                      >
-                        {isResendingEmail ? (
-                          <>
-                            <RefreshCw className="w-3 h-3 animate-spin text-[#A68F7E]" />
-                            <span>전송 확인 중...</span>
-                          </>
-                        ) : (
-                          <>
-                            <MailCheck className="w-3 h-3" />
-                            <span>이메일 수신 재확인</span>
-                          </>
-                        )}
-                      </button>
-                    </div>
-
-                    {emailResentSuccess && (
-                      <div className="p-2.5 bg-emerald-50 text-emerald-800 rounded-md border border-emerald-200 text-xs flex items-center space-x-2 animate-fadeIn">
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        <span>대표 이메일({studioInfo.email})로 전송 기록되었습니다!</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 3: Delivery Options Guide */}
-              {emailTab === 'delivery' && (
-                <div className="space-y-4 animate-fadeIn text-xs text-[#333333]">
-                  <div className="bg-[#FAF9F5] p-5 rounded-xl border border-black/10 space-y-3 font-sans">
-                    <h4 className="font-serif-kr text-sm font-bold text-[#1A1A1A] flex items-center">
-                      <Mail className="w-4 h-4 mr-1.5 text-[#A68F7E]" />
-                      <span>무료로 대표님 이메일({studioInfo.email}) 수신받는 3가지 방법</span>
-                    </h4>
-
-                    <div className="space-y-2.5 pt-1">
-                      <div className="p-3 bg-white rounded-lg border border-black/5">
-                        <p className="font-semibold text-[#1A1A1A] text-xs">1. 웹사이트 내장 수신함 (즉시 사용 가능)</p>
-                        <p className="text-[#666666] text-[11px] mt-0.5">
-                          대표님이 웹사이트의 편집/관리자 모드를 켜면 제출된 고객 문의가 자동으로 리스트업됩니다.
-                        </p>
-                      </div>
-
-                      <div className="p-3 bg-white rounded-lg border border-black/5">
-                        <p className="font-semibold text-[#1A1A1A] text-xs">2. Formspree / EmailJS 연동 (100% 무료)</p>
-                        <p className="text-[#666666] text-[11px] mt-0.5">
-                          Formspree.io 가입 후 부여받는 Endpoint URL을 연결하면 고객이 제출할 때마다 대표 네이버 메일로 자동 전송됩니다.
-                        </p>
-                      </div>
-
-                      <div className="p-3 bg-white rounded-lg border border-black/5">
-                        <p className="font-semibold text-[#1A1A1A] text-xs">3. 원클릭 메일/카카오톡 전달 버튼</p>
-                        <p className="text-[#666666] text-[11px] mt-0.5">
-                          손님이 제출 후 '네이버 메일 전달'이나 '카카오톡 전달' 버튼을 누르면 1초 만에 내용이 카톡/메일로 보내집니다.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {inquiryResult.data.specialRequests && (
+                <div className="pt-2 border-t border-black/5">
+                  <span className="text-[#888888] block text-[11px]">요청사항</span>
+                  <span className="text-[#333333] font-light">{inquiryResult.data.specialRequests}</span>
                 </div>
               )}
             </div>
 
-            {/* Bottom Modal Actions */}
-            <div className="pt-6 border-t border-black/10 space-y-2.5 mt-6">
-              <button
-                onClick={copyInquirySummary}
-                className="w-full py-3 bg-[#F5F3EF] hover:bg-[#EAE7E2] text-[#1A1A1A] rounded-lg text-xs font-medium flex items-center justify-center space-x-2 transition-colors border border-black/5"
+            {/* Action Buttons: Kakao 1:1 + Confirm Close */}
+            <div className="space-y-2.5">
+              <a
+                href={studioInfo.kakaoLink || "https://pf.kakao.com/_AxdWxgn"}
+                target="_blank"
+                rel="noreferrer"
+                className="w-full py-3.5 bg-[#FEE500] hover:bg-[#FDD835] text-[#191919] rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-colors shadow-xs"
               >
-                <Copy className="w-3.5 h-3.5 text-[#A68F7E]" />
-                <span>{copied ? '예약 내역 텍스트 복사 완료!' : '예약 접수 내역 클립보드 복사'}</span>
-              </button>
+                <KakaoIcon className="w-4 h-4 fill-current" />
+                <span>카카오톡으로 빠른 상담하기</span>
+              </a>
 
               <button
                 onClick={() => setInquiryResult(null)}
-                className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#A68F7E] text-white rounded-lg text-xs font-medium tracking-[0.2em] uppercase transition-colors shadow-md"
+                className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#333333] text-white rounded-xl text-xs font-medium tracking-[0.15em] uppercase transition-colors shadow-xs"
               >
-                확인 및 모달 닫기
+                확인
               </button>
             </div>
           </div>
