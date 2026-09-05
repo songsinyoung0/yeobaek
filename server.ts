@@ -94,10 +94,14 @@ async function startServer() {
             headers: {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
+              'Origin': 'https://yeobaek-studio.com',
+              'Referer': 'https://yeobaek-studio.com/',
             },
             body: JSON.stringify(emailPayload),
           });
-          return { email, ok: resp.ok };
+          const resData = await resp.json().catch(() => ({}));
+          console.log(`[FormSubmit ${email}] Status: ${resp.status}`, resData);
+          return { email, ok: resp.ok, data: resData };
         } catch (err) {
           console.warn(`[Inquiry Mail Notice] Failed to send to ${email}:`, err);
           return { email, ok: false };

@@ -146,31 +146,36 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
       console.warn('Server inquiry dispatch notice:', err);
     }
 
-    // 3. Fallback client-side direct email dispatch to tlsdud3071@gmail.com
+    // 3. Fallback client-side direct email dispatch to both Gmail and Naver
     try {
-      fetch('https://formsubmit.co/ajax/tlsdud3071@gmail.com', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          _subject: `[여백스튜디오 예약문의] ${formData.groomName || formData.brideName}님 (${formData.weddingDate} 예식)`,
-          _replyto: formData.email || 'tlsdud3071@gmail.com',
-          접수번호: refNum,
-          접수일시: now,
-          신랑성함: formData.groomName || '-',
-          신부성함: formData.brideName || '-',
-          연락처: formData.phone,
-          고객이메일: formData.email || '미입력',
-          예식일자: formData.weddingDate,
-          예식시간: formData.weddingTime,
-          예식장소: formData.venueName,
-          선택상품: `${pkgDetails.name} [${pkgDetails.priceText}]`,
-          리뷰이벤트: formData.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송)' : '참여 안함',
-          요청사항: formData.specialRequests || '없음',
-        }),
-      }).catch(() => {});
+      const clientEmailBody = {
+        _subject: `[여백스튜디오 예약문의] ${formData.groomName || formData.brideName}님 (${formData.weddingDate} 예식)`,
+        _replyto: formData.email || 'yeobaek5795@naver.com',
+        접수번호: refNum,
+        접수일시: now,
+        신랑성함: formData.groomName || '-',
+        신부성함: formData.brideName || '-',
+        연락처: formData.phone,
+        고객이메일: formData.email || '미입력',
+        예식일자: formData.weddingDate,
+        예식시간: formData.weddingTime,
+        예식장소: formData.venueName,
+        선택상품: `${pkgDetails.name} [${pkgDetails.priceText}]`,
+        리뷰이벤트: formData.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송)' : '참여 안함',
+        요청사항: formData.specialRequests || '없음',
+      };
+
+      const mailTargets = ['yeobaek5795@naver.com', 'tlsdud3071@gmail.com'];
+      mailTargets.forEach((email) => {
+        fetch(`https://formsubmit.co/ajax/${email}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: JSON.stringify(clientEmailBody),
+        }).catch(() => {});
+      });
     } catch {}
 
     setInquiryResult({
