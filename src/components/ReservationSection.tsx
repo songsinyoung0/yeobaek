@@ -181,6 +181,25 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
     setIsSubmitting(false);
   };
 
+  const handleCloseSuccessModal = () => {
+    setInquiryResult(null);
+    setFormData({
+      groomName: '',
+      brideName: '',
+      phone: '',
+      email: '',
+      weddingDate: '',
+      weddingTime: '12:00',
+      venueName: '',
+      selectedPackage: selectedPackageId || 'album',
+      priceType: 'WESTERN',
+      reviewEvent: 'JOIN',
+      specialRequests: '',
+      agreeToTerms: true,
+    });
+    setErrors({});
+  };
+
   const getPackageDetails = (pkgId: string, priceType: 'NORMAL' | 'WESTERN') => {
     switch (pkgId) {
       case 'raw':
@@ -578,7 +597,7 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
           <div className="max-w-lg w-full bg-white rounded-2xl border border-black/10 p-6 sm:p-8 text-[#1A1A1A] shadow-2xl relative my-auto animate-scaleUp">
             {/* Close Button */}
             <button
-              onClick={() => setInquiryResult(null)}
+              onClick={handleCloseSuccessModal}
               className="absolute top-4 right-4 p-2 rounded-full text-[#888888] hover:text-[#1A1A1A] hover:bg-[#F5F3EF] transition-colors"
               aria-label="닫기"
             >
@@ -597,7 +616,7 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
                 예약 문의가 정상 접수되었습니다
               </h3>
               <p className="text-xs sm:text-sm text-[#666666] font-light leading-relaxed max-w-sm mx-auto">
-                대표 작가에게 문의 내용이 안전하게 전달되었습니다.<br />
+                대표 작가에게 문의 내용이 전달되었습니다.<br />
                 남겨주신 연락처로 <strong className="text-[#1A1A1A] font-medium">24시간 이내</strong>에 확인 안내를 드리겠습니다.
               </p>
             </div>
@@ -661,7 +680,7 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
               )}
             </div>
 
-            {/* Action Buttons: Kakao 1:1 + Confirm Close */}
+            {/* Action Buttons: Kakao 1:1 Channel + Confirm Button */}
             <div className="space-y-2.5">
               <a
                 href={studioInfo.kakaoLink || "https://pf.kakao.com/_AxdWxgn"}
@@ -670,11 +689,11 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
                 className="w-full py-3.5 bg-[#FEE500] hover:bg-[#FDD835] text-[#191919] rounded-xl text-xs font-bold flex items-center justify-center space-x-2 transition-colors shadow-xs"
               >
                 <KakaoIcon className="w-4 h-4 fill-current" />
-                <span>카카오톡으로 빠른 상담하기</span>
+                <span>카카오톡 채널 1:1 상담연결</span>
               </a>
 
               <button
-                onClick={() => setInquiryResult(null)}
+                onClick={handleCloseSuccessModal}
                 className="w-full py-3.5 bg-[#1A1A1A] hover:bg-[#333333] text-white rounded-xl text-xs font-medium tracking-[0.15em] uppercase transition-colors shadow-xs"
               >
                 확인
