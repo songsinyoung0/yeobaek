@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Host
+Host: https://www.yeobaekstudioiksan.com
+
+# Sitemaps
+Sitemap: https://www.yeobaekstudioiksan.com/sitemap.xml

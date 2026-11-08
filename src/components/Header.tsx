@@ -39,12 +39,12 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
   }, []);
 
   const navItems = [
-    { id: 'about', label: 'ABOUT', krLabel: '스튜디오 소개' },
-    { id: 'gallery', label: 'GALLERY', krLabel: '포트폴리오' },
-    { id: 'pricing', label: 'PRICING', krLabel: '본식스냅' },
-    { id: 'iphone-snap', label: 'iPHONE SNAP', krLabel: '아이폰스냅 (NEW)' },
-    { id: 'reservation', label: 'RESERVATION', krLabel: '예약 문의' },
-    { id: 'faq', label: 'FAQ', krLabel: '이용 안내' },
+    { id: 'gallery', label: 'GALLERY', krLabel: '본식스냅' },
+    { id: 'about', label: 'ABOUT', krLabel: '소개' },
+    { id: 'pricing', label: 'PRICING', krLabel: '상품안내' },
+    { id: 'iphone-snap', label: 'iPHONE SNAP', krLabel: '아이폰스냅' },
+    { id: 'reservation', label: 'RESERVATION', krLabel: '일정 및 예약문의' },
+    { id: 'faq', label: 'FAQ', krLabel: '이용안내' },
   ];
 
   const handleNavClick = (id: string) => {
@@ -63,10 +63,15 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
       <div className="max-w-7xl mx-auto px-3.5 sm:px-6 lg:px-12 flex items-center justify-between">
         {/* Brand Logo & Partner Tag */}
         <div className="flex items-center space-x-1.5 sm:space-x-3 min-w-0">
-          <button
-            onClick={() => handleNavClick('hero')}
+          <a
+            href="#hero"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick('hero');
+            }}
             className="group flex flex-col text-left focus:outline-hidden shrink-0"
             aria-label="여백스튜디오 메인으로 이동"
+            title="여백스튜디오 메인"
           >
             <span
               className={`font-serif-kr text-lg sm:text-2xl font-semibold tracking-wider sm:tracking-widest uppercase transition-colors duration-300 ${
@@ -82,11 +87,15 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
             >
               Yeobaek Studio
             </span>
-          </button>
+          </a>
 
           {/* Western Life Hotel Official Partner Badge (Visible on Mobile & Desktop) */}
-          <span
-            onClick={() => handleNavClick('pricing')}
+          <a
+            href="#pricing"
+            onClick={(e) => {
+              e.preventDefault();
+              handleNavClick('pricing');
+            }}
             className={`inline-flex items-center px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[8.5px] sm:text-[10px] font-serif-kr font-medium cursor-pointer transition-all whitespace-nowrap shadow-2xs ${
               isScrolled
                 ? 'bg-[#A68F7E]/15 text-[#A68F7E] hover:bg-[#A68F7E] hover:text-white border border-[#A68F7E]/30'
@@ -95,17 +104,22 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
             title="익산 웨스턴라이프 호텔 공식 제휴 스튜디오 (제휴가 보기)"
           >
             <span>웨스턴라이프 공식제휴</span>
-          </span>
+          </a>
         </div>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-8 lg:space-x-10">
+        <nav aria-label="메인 내비게이션" className="hidden md:flex items-center space-x-7 lg:space-x-9">
           {navItems.map((item) => {
             const isActive = activeSection === item.id;
             return (
-              <button
+              <a
                 key={item.id}
-                onClick={() => handleNavClick(item.id)}
+                href={`#${item.id}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleNavClick(item.id);
+                }}
+                title={`여백스튜디오 ${item.krLabel}`}
                 className={`group relative text-[11px] tracking-[0.2em] uppercase font-medium py-1 transition-colors duration-300 ${
                   isScrolled
                     ? isActive
@@ -124,7 +138,7 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
                     </span>
                   )}
                 </span>
-              </button>
+              </a>
             );
           })}
         </nav>
@@ -292,11 +306,15 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
             <p className="font-serif-en text-xs tracking-[0.25em] text-[#A68F7E] uppercase">
               Navigation Menu
             </p>
-            <div className="flex flex-col space-y-5">
+            <nav aria-label="모바일 내비게이션" className="flex flex-col space-y-5">
               {navItems.map((item) => (
-                <button
+                <a
                   key={item.id}
-                  onClick={() => handleNavClick(item.id)}
+                  href={`#${item.id}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleNavClick(item.id);
+                  }}
                   className="flex items-center justify-between text-left py-2 border-b border-black/5 group"
                 >
                   <span className="font-serif-kr text-lg font-medium text-[#1A1A1A] group-hover:text-[#A68F7E] transition-colors">
@@ -305,9 +323,9 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
                   <span className="font-serif-en text-xs tracking-widest text-[#888888] uppercase">
                     {item.label}
                   </span>
-                </button>
+                </a>
               ))}
-            </div>
+            </nav>
           </div>
 
           <div className="space-y-4 pt-6 border-t border-black/5">

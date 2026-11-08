@@ -25,7 +25,7 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-12 pb-16 border-b border-white/10">
           {/* Brand Info */}
-          <div className="md:col-span-5 space-y-4">
+          <div className="md:col-span-4 space-y-4">
             <div className="flex flex-col">
               <span className="font-serif-kr text-2xl font-semibold text-white tracking-widest uppercase">
                 <EditableText
@@ -95,8 +95,23 @@ export const Footer: React.FC = () => {
             </div>
           </div>
 
+          {/* Quick Links (Sitemap for Naver & Google Crawlers) */}
+          <div className="md:col-span-2 space-y-3 text-xs font-light">
+            <p className="font-serif-en text-xs text-[#A68F7E] uppercase tracking-widest font-medium mb-3">
+              NAVIGATION
+            </p>
+            <nav aria-label="푸터 사이트링크 내비게이션" className="flex flex-col space-y-2 text-[#CCCCCC]">
+              <a href="#gallery" className="hover:text-[#A68F7E] transition-colors">· 본식스냅</a>
+              <a href="#about" className="hover:text-[#A68F7E] transition-colors">· 소개</a>
+              <a href="#pricing" className="hover:text-[#A68F7E] transition-colors">· 상품안내</a>
+              <a href="#iphone-snap" className="hover:text-[#A68F7E] transition-colors">· 아이폰스냅</a>
+              <a href="#reservation" className="hover:text-[#A68F7E] transition-colors">· 일정 및 예약문의</a>
+              <a href="#faq" className="hover:text-[#A68F7E] transition-colors">· 이용안내(FAQ)</a>
+            </nav>
+          </div>
+
           {/* Business Information */}
-          <div className="md:col-span-4 space-y-3 text-xs text-[#AAAAAA] font-light">
+          <div className="md:col-span-3 space-y-3 text-xs text-[#AAAAAA] font-light">
             <p className="font-serif-en text-xs text-[#A68F7E] uppercase tracking-widest font-medium mb-3">
               BUSINESS INFO
             </p>
