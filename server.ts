@@ -72,6 +72,7 @@ async function startServer() {
         _replyto: inquiry.email || 'yeobaek5795@naver.com',
         접수번호: refNum,
         접수일시: now,
+        예약구분: inquiry.serviceSummary || (inquiry.serviceType === 'COMBO_BOTH' ? '본식+아이폰 동시예약' : inquiry.serviceType === 'IPHONE_ONLY' ? '아이폰 스냅 단독' : '본식 스냅 단독'),
         신랑성함: inquiry.groomName || '-',
         신부성함: inquiry.brideName || '-',
         연락처: inquiry.phone || '-',

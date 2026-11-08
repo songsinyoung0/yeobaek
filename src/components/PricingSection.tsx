@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { Check, Star, Sparkles, Building2, Gift, PhoneCall, Globe, CreditCard, HeartHandshake, ArrowRight, Award } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Check, Star, Sparkles, Building2, Gift, PhoneCall, Globe, CreditCard, HeartHandshake, ArrowRight, Award, Smartphone } from 'lucide-react';
 import { useSiteContent } from '../context/ContentContext';
 import { EditableText } from './EditableText';
+import { IphoneSnapPricing } from './IphoneSnapPricing';
 
 interface PricingSectionProps {
   onSelectPackage: (packageId: string) => void;
@@ -10,119 +11,188 @@ interface PricingSectionProps {
 export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPackage }) => {
   const { content, updatePackage } = useSiteContent();
   const packages = content.packages;
+  const [activeCategory, setActiveCategory] = useState<'camera' | 'iphone'>('camera');
   const [priceMode, setPriceMode] = useState<'standard' | 'western'>('western');
+
+  // Handle hash navigation to #iphone-snap or #pricing
+  useEffect(() => {
+    const checkHash = () => {
+      if (window.location.hash === '#iphone-snap' || window.location.hash === '#iphone') {
+        setActiveCategory('iphone');
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, []);
 
   return (
     <section id="pricing" className="py-24 sm:py-32 bg-[#F5F3EF] relative">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
-        {/* Western Life Partnership Banner */}
-        <div className="mb-10 p-4 sm:p-6 bg-[#1A1A1A] text-white rounded-2xl border border-[#A68F7E]/40 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-[#A68F7E]/20 text-[#A68F7E] flex items-center justify-center shrink-0 border border-[#A68F7E]/40">
-              <Building2 className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-[#A68F7E] text-white text-[10px] font-serif-en font-medium tracking-wider uppercase">
-                  OFFICIAL PARTNER
-                </span>
-                <span className="text-xs text-[#A68F7E] font-medium tracking-widest">WESTERN LIFE HOTEL</span>
-              </div>
-              <h3 className="font-serif-kr text-lg sm:text-xl font-normal text-white mt-1">
-                익산 웨스턴라이프 호텔 공식 제휴 스튜디오
-              </h3>
-              <p className="text-xs text-white/70 font-light mt-0.5">
-                웨스턴라이프 예약 고객님께만 제공되는 전용 제휴 할인 혜택 및 특별 연계 이벤트
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3 shrink-0">
+        {/* Main Category Tabs: Camera Snap vs iPhone Snap */}
+        <div className="flex justify-center mb-10">
+          <div className="inline-flex p-1.5 bg-[#EAE7E2] rounded-2xl border border-black/10 shadow-sm max-w-xl w-full">
             <button
-              onClick={() => setPriceMode('western')}
-              className={`px-4 py-2.5 rounded-xl text-xs font-serif-kr transition-all duration-300 flex items-center space-x-2 ${
-                priceMode === 'western'
-                  ? 'bg-[#A68F7E] text-white shadow-md font-medium ring-2 ring-[#A68F7E]/50'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20'
-              }`}
-            >
-              <Award className="w-4 h-4 text-amber-300" />
-              <span>웨스턴라이프 제휴가 보기</span>
-            </button>
-            <button
-              onClick={() => setPriceMode('standard')}
-              className={`px-4 py-2.5 rounded-xl text-xs font-serif-kr transition-all duration-300 ${
-                priceMode === 'standard'
-                  ? 'bg-white text-[#1A1A1A] shadow-md font-medium'
-                  : 'bg-white/10 text-white/80 hover:bg-white/20'
-              }`}
-            >
-              <span>일반 스냅 가격표</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="font-serif-en text-xs sm:text-sm tracking-[0.3em] uppercase text-[#A68F7E] font-medium block mb-3">
-            {priceMode === 'western' ? 'WESTERN LIFE PARTNERSHIP PRICING' : 'STANDARD PACKAGES & PRICING'}
-          </span>
-          <h2 className="font-serif-kr text-3xl sm:text-4xl lg:text-5xl font-light text-[#1A1A1A] tracking-tight leading-snug mb-4">
-            {priceMode === 'western' ? '웨스턴 & 여백 스튜디오 본식스냅' : '여백 스튜디오 본식스냅 가격안내'}
-          </h2>
-          <p className="text-sm sm:text-base text-[#555555] font-light leading-relaxed">
-            {priceMode === 'western'
-              ? '웨스턴라이프 제휴 고객님을 위한 4가지 특가 패키지 구성입니다.'
-              : '불필요한 옵션 강요 없이, 정직하고 투명한 4가지 본식 스냅 패키지 안내입니다.'}
-          </p>
-
-          {/* Toggle Switch Tabs inside section */}
-          <div className="inline-flex items-center p-1.5 bg-[#EAE7E2] rounded-2xl border border-black/5 mt-6 shadow-inner">
-            <button
-              onClick={() => setPriceMode('western')}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-serif-kr font-medium transition-all duration-300 flex items-center space-x-2 ${
-                priceMode === 'western'
+              onClick={() => setActiveCategory('camera')}
+              className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-serif-kr font-medium transition-all duration-300 flex items-center justify-center space-x-2 ${
+                activeCategory === 'camera'
                   ? 'bg-[#1A1A1A] text-white shadow-md'
                   : 'text-[#666666] hover:text-[#1A1A1A]'
               }`}
             >
               <Award className="w-4 h-4 text-[#A68F7E]" />
-              <span>웨스턴라이프 제휴 혜택가</span>
-              <span className="ml-1 px-2 py-0.5 rounded-full bg-[#A68F7E] text-white text-[10px]">특가</span>
+              <span>본식 카메라 스냅</span>
             </button>
+
             <button
-              onClick={() => setPriceMode('standard')}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-serif-kr font-medium transition-all duration-300 ${
-                priceMode === 'standard'
-                  ? 'bg-white text-[#1A1A1A] shadow-md'
-                  : 'text-[#666666] hover:text-[#1A1A1A]'
+              onClick={() => setActiveCategory('iphone')}
+              className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-serif-kr font-medium transition-all duration-300 flex items-center justify-center space-x-2 relative ${
+                activeCategory === 'iphone'
+                  ? 'bg-rose-600 text-white shadow-md'
+                  : 'text-[#666666] hover:text-rose-600'
               }`}
             >
-              <span>일반 스냅 가격표</span>
+              <Smartphone className="w-4 h-4" />
+              <span>아이폰 스냅 (iPhone Snap)</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-sans font-bold ml-1 ${
+                activeCategory === 'iphone' ? 'bg-white text-rose-600' : 'bg-rose-500 text-white'
+              }`}>
+                OPEN
+              </span>
             </button>
           </div>
         </div>
 
-        {/* Western Life Special Benefit Banner Notice */}
-        {priceMode === 'western' && (
-          <div className="mb-10 p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-[#1A1A1A] animate-fadeIn">
-            <div className="flex items-center space-x-3">
-              <Gift className="w-6 h-6 text-amber-600 shrink-0" />
-              <div>
-                <h4 className="font-serif-kr text-sm font-semibold text-amber-900">
-                  🎁 웨스턴 예약자 추가 이벤트 (특전 혜택)
-                </h4>
-                <p className="text-xs text-amber-800 font-light mt-0.5">
-                  웨스턴 제휴 업체 여백스튜디오 촬영 상품 예약시 <strong className="font-medium underline">웨딩 네일아트 10% 할인</strong> (네일 상품 5만원 이상 결제시 적용)
-                </p>
-              </div>
-            </div>
-            <div className="px-3 py-1 bg-amber-600 text-white rounded-full text-[11px] font-medium shrink-0">
-              웨스턴 전용 혜택
+        {/* If iPhone Snap is selected, render IphoneSnapPricing */}
+        {activeCategory === 'iphone' ? (
+          <div>
+            <IphoneSnapPricing onSelectPackage={onSelectPackage} />
+
+            {/* Back to Camera Snap Banner */}
+            <div className="mt-12 text-center">
+              <button
+                onClick={() => {
+                  setActiveCategory('camera');
+                  const el = document.getElementById('pricing');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-white border border-stone-300 text-stone-700 hover:text-stone-900 hover:border-stone-500 text-xs font-serif-kr transition-all shadow-xs"
+              >
+                <span>📸 본식 카메라 스냅(웨스턴 제휴/일반) 가격표 보기</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
-        )}
+        ) : (
+          <div>
+            {/* Western Life Partnership Banner */}
+            <div className="mb-10 p-4 sm:p-6 bg-[#1A1A1A] text-white rounded-2xl border border-[#A68F7E]/40 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 rounded-full bg-[#A68F7E]/20 text-[#A68F7E] flex items-center justify-center shrink-0 border border-[#A68F7E]/40">
+                  <Building2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="px-2.5 py-0.5 rounded-full bg-[#A68F7E] text-white text-[10px] font-serif-en font-medium tracking-wider uppercase">
+                      OFFICIAL PARTNER
+                    </span>
+                    <span className="text-xs text-[#A68F7E] font-medium tracking-widest">WESTERN LIFE HOTEL</span>
+                  </div>
+                  <h3 className="font-serif-kr text-lg sm:text-xl font-normal text-white mt-1">
+                    익산 웨스턴라이프 호텔 공식 제휴 스튜디오
+                  </h3>
+                  <p className="text-xs text-white/70 font-light mt-0.5">
+                    웨스턴라이프 예약 고객님께만 제공되는 전용 제휴 할인 혜택 및 특별 연계 이벤트
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-3 shrink-0">
+                <button
+                  onClick={() => setPriceMode('western')}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-serif-kr transition-all duration-300 flex items-center space-x-2 ${
+                    priceMode === 'western'
+                      ? 'bg-[#A68F7E] text-white shadow-md font-medium ring-2 ring-[#A68F7E]/50'
+                      : 'bg-white/10 text-white/80 hover:bg-white/20'
+                  }`}
+                >
+                  <Award className="w-4 h-4 text-amber-300" />
+                  <span>웨스턴라이프 제휴가 보기</span>
+                </button>
+                <button
+                  onClick={() => setPriceMode('standard')}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-serif-kr transition-all duration-300 ${
+                    priceMode === 'standard'
+                      ? 'bg-white text-[#1A1A1A] shadow-md font-medium'
+                      : 'bg-white/10 text-white/80 hover:bg-white/20'
+                  }`}
+                >
+                  <span>일반 스냅 가격표</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Section Header */}
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <span className="font-serif-en text-xs sm:text-sm tracking-[0.3em] uppercase text-[#A68F7E] font-medium block mb-3">
+                {priceMode === 'western' ? 'WESTERN LIFE PARTNERSHIP PRICING' : 'STANDARD PACKAGES & PRICING'}
+              </span>
+              <h2 className="font-serif-kr text-3xl sm:text-4xl lg:text-5xl font-light text-[#1A1A1A] tracking-tight leading-snug mb-4">
+                {priceMode === 'western' ? '웨스턴 & 여백 스튜디오 본식스냅' : '여백 스튜디오 본식스냅 가격안내'}
+              </h2>
+              <p className="text-sm sm:text-base text-[#555555] font-light leading-relaxed">
+                {priceMode === 'western'
+                  ? '웨스턴라이프 제휴 고객님을 위한 4가지 특가 패키지 구성입니다.'
+                  : '불필요한 옵션 강요 없이, 정직하고 투명한 4가지 본식 스냅 패키지 안내입니다.'}
+              </p>
+
+              {/* Toggle Switch Tabs inside section */}
+              <div className="inline-flex items-center p-1.5 bg-[#EAE7E2] rounded-2xl border border-black/5 mt-6 shadow-inner">
+                <button
+                  onClick={() => setPriceMode('western')}
+                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-serif-kr font-medium transition-all duration-300 flex items-center space-x-2 ${
+                    priceMode === 'western'
+                      ? 'bg-[#1A1A1A] text-white shadow-md'
+                      : 'text-[#666666] hover:text-[#1A1A1A]'
+                  }`}
+                >
+                  <Award className="w-4 h-4 text-[#A68F7E]" />
+                  <span>웨스턴라이프 제휴 혜택가</span>
+                  <span className="ml-1 px-2 py-0.5 rounded-full bg-[#A68F7E] text-white text-[10px]">특가</span>
+                </button>
+                <button
+                  onClick={() => setPriceMode('standard')}
+                  className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-serif-kr font-medium transition-all duration-300 ${
+                    priceMode === 'standard'
+                      ? 'bg-white text-[#1A1A1A] shadow-md'
+                      : 'text-[#666666] hover:text-[#1A1A1A]'
+                  }`}
+                >
+                  <span>일반 스냅 가격표</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Western Life Special Benefit Banner Notice */}
+            {priceMode === 'western' && (
+              <div className="mb-10 p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-4 text-[#1A1A1A] animate-fadeIn">
+                <div className="flex items-center space-x-3">
+                  <Gift className="w-6 h-6 text-amber-600 shrink-0" />
+                  <div>
+                    <h4 className="font-serif-kr text-sm font-semibold text-amber-900">
+                      🎁 웨스턴 예약자 추가 이벤트 (특전 혜택)
+                    </h4>
+                    <p className="text-xs text-amber-800 font-light mt-0.5">
+                      웨스턴 제휴 업체 여백스튜디오 촬영 상품 예약시 <strong className="font-medium underline">웨딩 네일아트 10% 할인</strong> (네일 상품 5만원 이상 결제시 적용)
+                    </p>
+                  </div>
+                </div>
+                <div className="px-3 py-1 bg-amber-600 text-white rounded-full text-[11px] font-medium shrink-0">
+                  웨스턴 전용 혜택
+                </div>
+              </div>
+            )}
 
         {/* 4-Column Pricing Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch mb-16">
@@ -391,6 +461,42 @@ export const PricingSection: React.FC<PricingSectionProps> = ({ onSelectPackage 
             </div>
           </div>
         </div>
+
+        {/* Promotion Banner for iPhone Snap at the bottom of Camera Snap */}
+          <div className="mt-10 p-6 bg-gradient-to-r from-rose-50 to-stone-100 rounded-2xl border border-rose-200/70 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center space-x-3 text-stone-900">
+              <div className="w-10 h-10 rounded-xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Smartphone className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="font-serif-kr text-sm font-bold text-stone-900">
+                    여백스튜디오 아이폰 스냅 (iPhone Snap) 신규 오픈!
+                  </span>
+                  <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">
+                    NEW
+                  </span>
+                </div>
+                <p className="text-xs text-stone-600 font-light mt-0.5">
+                  최신 Pro 기종으로 현장의 떨림과 온기를 감각적으로 기록합니다. (본식스냅 동시 예약시 5만원 추가 할인)
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setActiveCategory('iphone');
+                const el = document.getElementById('pricing');
+                el?.scrollIntoView({ behavior: 'smooth' });
+              }}
+              className="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-serif-kr font-medium transition-all shadow-xs shrink-0 flex items-center space-x-1.5 active:scale-95"
+            >
+              <span>아이폰 스냅 가격표 보기</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+        )}
 
       </div>
     </section>

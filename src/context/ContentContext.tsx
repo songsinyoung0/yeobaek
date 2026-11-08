@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { HeroSlide, GalleryItem, PackageOption, Testimonial, FaqItem, InquiryItem, ReservationFormData } from '../types';
-import { HERO_SLIDES, GALLERY_ITEMS, PACKAGES, TESTIMONIALS, FAQ_ITEMS } from '../data/weddingData';
+import { HERO_SLIDES, GALLERY_ITEMS, IPHONE_GALLERY_ITEMS, PACKAGES, TESTIMONIALS, FAQ_ITEMS } from '../data/weddingData';
 import { getStoredData, saveStoredData } from '../utils/storageHelper';
 
 export interface AboutContent {
@@ -29,6 +29,7 @@ export interface StudioInfo {
   businessNumber: string;
   workingHours: string;
   instagram: string;
+  instagramIphone?: string;
   kakao: string;
   kakaoLink: string;
 }
@@ -37,6 +38,7 @@ export interface SiteContent {
   heroSlides: HeroSlide[];
   about: AboutContent;
   galleryItems: GalleryItem[];
+  iphoneGalleryItems?: GalleryItem[];
   packages: PackageOption[];
   testimonials: Testimonial[];
   faqItems: FaqItem[];
@@ -69,11 +71,12 @@ const DEFAULT_STUDIO_INFO: StudioInfo = {
   businessNumber: '580-54-00931',
   workingHours: '수~월요일 11:00 ~ 19:00 (화요일 휴무)',
   instagram: 'https://www.instagram.com/yeobaek_studio_iksan/',
+  instagramIphone: 'https://www.instagram.com/yeobaek_iphone_iksan/',
   kakao: '여백스튜디오 익산',
   kakaoLink: 'https://pf.kakao.com/_AxdWxgn',
 };
 
-const STORAGE_KEY = 'yeobaek_site_content_v63';
+const STORAGE_KEY = 'yeobaek_site_content_v65';
 const INQUIRIES_STORAGE_KEY = 'yeobaek_inquiries_v1';
 
 interface ContentContextType {
@@ -95,6 +98,9 @@ interface ContentContextType {
   addGalleryItem: (item: Omit<GalleryItem, 'id'>) => void;
   deleteGalleryItem: (id: string) => void;
   reorderGalleryItems: (fromIndex: number, toIndex: number) => void;
+  updateIphoneGalleryItem: (id: string, item: Partial<GalleryItem>) => void;
+  addIphoneGalleryItem: (item: Omit<GalleryItem, 'id'>) => void;
+  deleteIphoneGalleryItem: (id: string) => void;
   updatePackage: (id: string, pkg: Partial<PackageOption>) => void;
   updateTestimonial: (id: string, t: Partial<Testimonial>) => void;
   addTestimonial: (t: Omit<Testimonial, 'id'>) => void;
@@ -108,6 +114,13 @@ interface ContentContextType {
 
 const syncGalleryOrder = (items: GalleryItem[]): GalleryItem[] => {
   if (!items || items.length === 0) return GALLERY_ITEMS;
+  return items;
+};
+
+const syncIphoneGalleryItems = (items?: GalleryItem[]): GalleryItem[] => {
+  if (!items || items.length === 0 || (items[0] && items[0].imageUrl && items[0].imageUrl.includes('sinbudaegisil-6')) || (items[0] && items[0].description)) {
+    return IPHONE_GALLERY_ITEMS;
+  }
   return items;
 };
 
@@ -152,6 +165,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
           heroSlides: normalizedSlides,
           about: { ...DEFAULT_ABOUT, ...parsed.about },
           galleryItems: syncGalleryOrder(parsed.galleryItems || GALLERY_ITEMS),
+          iphoneGalleryItems: syncIphoneGalleryItems(parsed.iphoneGalleryItems),
           packages: validPackages,
           testimonials: parsed.testimonials || TESTIMONIALS,
           faqItems: parsed.faqItems || FAQ_ITEMS,
@@ -165,6 +179,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       heroSlides: HERO_SLIDES,
       about: DEFAULT_ABOUT,
       galleryItems: GALLERY_ITEMS,
+      iphoneGalleryItems: IPHONE_GALLERY_ITEMS,
       packages: PACKAGES,
       testimonials: TESTIMONIALS,
       faqItems: FAQ_ITEMS,
@@ -217,6 +232,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
           heroSlides: normalizedAsyncSlides,
           about: { ...DEFAULT_ABOUT, ...asyncData.about },
           galleryItems: syncGalleryOrder(asyncData.galleryItems || GALLERY_ITEMS),
+          iphoneGalleryItems: syncIphoneGalleryItems(asyncData.iphoneGalleryItems),
           packages: validPackages,
           testimonials: asyncData.testimonials || TESTIMONIALS,
           faqItems: asyncData.faqItems || FAQ_ITEMS,
@@ -378,6 +394,31 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
     });
   };
 
+  const updateIphoneGalleryItem = (id: string, item: Partial<GalleryItem>) => {
+    setContent((prev) => ({
+      ...prev,
+      iphoneGalleryItems: (prev.iphoneGalleryItems || IPHONE_GALLERY_ITEMS).map((g) => (g.id === id ? { ...g, ...item } : g)),
+    }));
+  };
+
+  const addIphoneGalleryItem = (item: Omit<GalleryItem, 'id'>) => {
+    const newItem: GalleryItem = {
+      ...item,
+      id: 'ip-g-' + Date.now(),
+    };
+    setContent((prev) => ({
+      ...prev,
+      iphoneGalleryItems: [newItem, ...(prev.iphoneGalleryItems || IPHONE_GALLERY_ITEMS)],
+    }));
+  };
+
+  const deleteIphoneGalleryItem = (id: string) => {
+    setContent((prev) => ({
+      ...prev,
+      iphoneGalleryItems: (prev.iphoneGalleryItems || IPHONE_GALLERY_ITEMS).filter((g) => g.id !== id),
+    }));
+  };
+
   const updatePackage = (id: string, pkg: Partial<PackageOption>) => {
     setContent((prev) => ({
       ...prev,
@@ -450,6 +491,7 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
       heroSlides: HERO_SLIDES,
       about: DEFAULT_ABOUT,
       galleryItems: GALLERY_ITEMS,
+      iphoneGalleryItems: IPHONE_GALLERY_ITEMS,
       packages: PACKAGES,
       testimonials: TESTIMONIALS,
       faqItems: FAQ_ITEMS,
@@ -485,6 +527,9 @@ export const ContentProvider: React.FC<{ children: React.ReactNode }> = ({ child
         addGalleryItem,
         deleteGalleryItem,
         reorderGalleryItems,
+        updateIphoneGalleryItem,
+        addIphoneGalleryItem,
+        deleteIphoneGalleryItem,
         updatePackage,
         updateTestimonial,
         addTestimonial,

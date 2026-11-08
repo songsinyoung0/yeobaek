@@ -14,8 +14,14 @@ import {
   Tag,
   Sparkles,
   FileText,
+  Smartphone,
+  Camera,
+  HeartHandshake,
+  Check,
+  Plus,
+  Percent,
 } from 'lucide-react';
-import { ReservationFormData, InquiryResult } from '../types';
+import { ReservationFormData, InquiryResult, ReservationServiceType } from '../types';
 import { useSiteContent } from '../context/ContentContext';
 import { KakaoIcon } from './KakaoIcon';
 
@@ -24,8 +30,20 @@ interface ReservationSectionProps {
 }
 
 export const ReservationSection: React.FC<ReservationSectionProps> = ({ selectedPackageId }) => {
-  const { content, addInquiry, isAdminMode, toggleAdminMode } = useSiteContent();
+  const { content, addInquiry } = useSiteContent();
   const { studioInfo } = content;
+
+  // Determine initial serviceType from selectedPackageId
+  const getInitialServiceType = (pkgId?: string): ReservationServiceType => {
+    if (pkgId === 'bundle-snap-iphone') return 'COMBO_BOTH';
+    if (pkgId === 'iphone-a' || pkgId === 'iphone-b') return 'IPHONE_ONLY';
+    return 'CAMERA_ONLY';
+  };
+
+  const [serviceType, setServiceType] = useState<ReservationServiceType>(() =>
+    getInitialServiceType(selectedPackageId)
+  );
+
   const [formData, setFormData] = useState<ReservationFormData>({
     groomName: '',
     brideName: '',
@@ -34,7 +52,17 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
     weddingDate: '',
     weddingTime: '12:00',
     venueName: '',
-    selectedPackage: selectedPackageId || 'album',
+    serviceType: getInitialServiceType(selectedPackageId),
+    selectedPackage: selectedPackageId && !selectedPackageId.startsWith('iphone') && selectedPackageId !== 'bundle-snap-iphone' ? selectedPackageId : 'album',
+    selectedIphonePackage: selectedPackageId === 'iphone-a' ? 'iphone-a' : 'iphone-b',
+    iphoneOptions: {
+      addWonpan: false,
+      addBanquet: false,
+      addPyebaek: false,
+      discountPortrait: false,
+      discountReview: false,
+      discountPartner: false,
+    },
     priceType: 'WESTERN',
     reviewEvent: 'JOIN',
     specialRequests: '',
@@ -45,9 +73,33 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
   const [inquiryResult, setInquiryResult] = useState<InquiryResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Synchronize when selectedPackageId prop changes (from external buttons)
   useEffect(() => {
     if (selectedPackageId) {
-      setFormData((prev) => ({ ...prev, selectedPackage: selectedPackageId }));
+      if (selectedPackageId === 'bundle-snap-iphone') {
+        setServiceType('COMBO_BOTH');
+        setFormData((prev) => ({
+          ...prev,
+          serviceType: 'COMBO_BOTH',
+          selectedPackage: prev.selectedPackage && !prev.selectedPackage.startsWith('iphone') ? prev.selectedPackage : 'album',
+          selectedIphonePackage: 'iphone-b',
+        }));
+      } else if (selectedPackageId.startsWith('iphone')) {
+        setServiceType('IPHONE_ONLY');
+        setFormData((prev) => ({
+          ...prev,
+          serviceType: 'IPHONE_ONLY',
+          selectedPackage: selectedPackageId,
+          selectedIphonePackage: selectedPackageId,
+        }));
+      } else {
+        setServiceType('CAMERA_ONLY');
+        setFormData((prev) => ({
+          ...prev,
+          serviceType: 'CAMERA_ONLY',
+          selectedPackage: selectedPackageId,
+        }));
+      }
     }
   }, [selectedPackageId]);
 
@@ -64,6 +116,148 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
+
+  const handleServiceTypeChange = (type: ReservationServiceType) => {
+    setServiceType(type);
+    setFormData((prev) => ({
+      ...prev,
+      serviceType: type,
+      selectedPackage: type === 'IPHONE_ONLY'
+        ? (prev.selectedIphonePackage || 'iphone-b')
+        : (prev.selectedPackage && !prev.selectedPackage.startsWith('iphone') ? prev.selectedPackage : 'album'),
+      selectedIphonePackage: prev.selectedIphonePackage || 'iphone-b',
+    }));
+  };
+
+  const handleIphoneOptionToggle = (key: keyof NonNullable<ReservationFormData['iphoneOptions']>) => {
+    setFormData((prev) => {
+      const currentOpts = prev.iphoneOptions || {};
+      return {
+        ...prev,
+        iphoneOptions: {
+          ...currentOpts,
+          [key]: !currentOpts[key],
+        },
+      };
+    });
+  };
+
+  // Calculation helpers
+  const getCameraPackagePrice = (pkgId: string, priceType: 'NORMAL' | 'WESTERN'): { name: string; price: number; priceText: string } => {
+    switch (pkgId) {
+      case 'raw':
+        return {
+          name: '원본형 (데이터)',
+          price: priceType === 'WESTERN' ? 400000 : 500000,
+          priceText: priceType === 'WESTERN' ? '40만원 (웨스턴 혜택가)' : '50만원 (일반가)',
+        };
+      case 'raw-retouched':
+        return {
+          name: '원본 + 보정본형',
+          price: priceType === 'WESTERN' ? 500000 : 600000,
+          priceText: priceType === 'WESTERN' ? '50만원 (웨스턴 혜택가)' : '60만원 (일반가)',
+        };
+      case 'album':
+        return {
+          name: '화보앨범형 [인기추천]',
+          price: priceType === 'WESTERN' ? 700000 : 800000,
+          priceText: priceType === 'WESTERN' ? '70만원 (웨스턴 혜택가)' : '80만원 (일반가)',
+        };
+      case 'premium':
+        return {
+          name: '프리미엄형 [2인 작가]',
+          price: priceType === 'WESTERN' ? 950000 : 1050000,
+          priceText: priceType === 'WESTERN' ? '95만원 (웨스턴 혜택가)' : '105만원 (일반가)',
+        };
+      default:
+        return {
+          name: '기타 커스텀 스냅',
+          price: 0,
+          priceText: '상담 후 견적 안내',
+        };
+    }
+  };
+
+  const getIphonePackagePrice = (pkgId: string): { name: string; price: number; priceText: string; timeText: string } => {
+    if (pkgId === 'iphone-a') {
+      return {
+        name: '아이폰스냅 A타입 [SIGNATURE]',
+        price: 250000,
+        priceText: '250,000원 (최대할인시 150,000원)',
+        timeText: '예식 60분 전 촬영',
+      };
+    }
+    return {
+      name: '아이폰스냅 B타입 [PREMIUM - 추천]',
+      price: 300000,
+      priceText: '300,000원 (최대할인시 200,000원)',
+      timeText: '예식 90분 전 촬영',
+    };
+  };
+
+  // Calculate total estimate based on current selections
+  const calculateEstimate = () => {
+    const opts = formData.iphoneOptions || {};
+    let iphoneOptionsAdd = 0;
+    if (opts.addWonpan) iphoneOptionsAdd += 30000;
+    if (opts.addBanquet) iphoneOptionsAdd += 30000;
+    if (opts.addPyebaek) iphoneOptionsAdd += 30000;
+
+    let iphoneDiscount = 0;
+    if (opts.discountPortrait) iphoneDiscount += 20000;
+    if (opts.discountReview) iphoneDiscount += 20000;
+    if (opts.discountPartner) iphoneDiscount += 10000;
+
+    if (serviceType === 'CAMERA_ONLY') {
+      const cameraInfo = getCameraPackagePrice(formData.selectedPackage, formData.priceType);
+      return {
+        title: `본식 카메라 스냅 [${cameraInfo.name}]`,
+        summaryText: `${cameraInfo.name} (${cameraInfo.priceText})`,
+        cameraPrice: cameraInfo.price,
+        iphonePrice: 0,
+        comboDiscount: 0,
+        total: cameraInfo.price,
+        totalText: cameraInfo.price > 0 ? `${cameraInfo.price.toLocaleString()}원` : '상담 후 안내',
+      };
+    }
+
+    if (serviceType === 'IPHONE_ONLY') {
+      const iphonePkgId = formData.selectedIphonePackage || formData.selectedPackage || 'iphone-b';
+      const iphoneInfo = getIphonePackagePrice(iphonePkgId);
+      const total = iphoneInfo.price + iphoneOptionsAdd - iphoneDiscount;
+      return {
+        title: `아이폰 스냅 단독 [${iphoneInfo.name}]`,
+        summaryText: `${iphoneInfo.name} (${iphoneInfo.price.toLocaleString()}원, 할인 ${iphoneDiscount.toLocaleString()}원 적용, 옵션 +${iphoneOptionsAdd.toLocaleString()}원)`,
+        cameraPrice: 0,
+        iphonePrice: iphoneInfo.price,
+        iphoneDiscount,
+        iphoneOptionsAdd,
+        comboDiscount: 0,
+        total,
+        totalText: `${total.toLocaleString()}원 (VAT 별도)`,
+      };
+    }
+
+    // COMBO_BOTH
+    const cameraInfo = getCameraPackagePrice(formData.selectedPackage, formData.priceType);
+    const iphoneInfo = getIphonePackagePrice(formData.selectedIphonePackage || 'iphone-b');
+    const comboDiscount = 50000; // 5만원 동시 예약 할인
+    const total = cameraInfo.price + iphoneInfo.price + iphoneOptionsAdd - iphoneDiscount - comboDiscount;
+
+    return {
+      title: `💎 본식스냅 + 아이폰스냅 동시예약 특전`,
+      summaryText: `본식: ${cameraInfo.name} + 아이폰: ${iphoneInfo.name} (동시할인 -50,000원 적용)`,
+      cameraPrice: cameraInfo.price,
+      iphonePrice: iphoneInfo.price,
+      iphoneDiscount,
+      iphoneOptionsAdd,
+      comboDiscount,
+      total,
+      totalText: cameraInfo.price > 0 ? `${total.toLocaleString()}원 (VAT 별도)` : '상담 후 안내',
+    };
+  };
+
+  const estimate = calculateEstimate();
 
   const validateForm = (): boolean => {
     const newErrors: Partial<Record<keyof ReservationFormData, string>> = {};
@@ -110,14 +304,25 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
       minute: '2-digit',
     });
 
-    const pkgDetails = getPackageDetails(formData.selectedPackage, formData.priceType);
+    const currentEstimate = calculateEstimate();
+
+    const serviceCategoryLabel =
+      serviceType === 'COMBO_BOTH'
+        ? '💎 본식스냅 + 아이폰스냅 함께 예약 (5만원 동시할인)'
+        : serviceType === 'IPHONE_ONLY'
+        ? '📱 아이폰 스냅만 단독 예약'
+        : '📸 본식 카메라 스냅만 예약';
+
+    const fullPackageName = currentEstimate.summaryText;
 
     // 1. Save inquiry to internal admin inbox
-    addInquiry(formData, refNum);
+    addInquiry({ ...formData, serviceType }, refNum);
 
     const inquiryPayload = {
       referenceNumber: refNum,
       submittedAt: now,
+      serviceType,
+      serviceSummary: serviceCategoryLabel,
       groomName: formData.groomName,
       brideName: formData.brideName,
       phone: formData.phone,
@@ -126,9 +331,10 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
       weddingTime: formData.weddingTime,
       venueName: formData.venueName,
       selectedPackage: formData.selectedPackage,
-      packageName: pkgDetails.name,
+      selectedIphonePackage: formData.selectedIphonePackage,
+      packageName: fullPackageName,
       priceType: formData.priceType,
-      priceText: pkgDetails.priceText,
+      priceText: currentEstimate.totalText,
       reviewEvent: formData.reviewEvent,
       specialRequests: formData.specialRequests,
     };
@@ -149,10 +355,11 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
     // 3. Fallback client-side direct email dispatch to both Gmail and Naver
     try {
       const clientEmailBody = {
-        _subject: `[여백스튜디오 예약문의] ${formData.groomName || formData.brideName}님 (${formData.weddingDate} 예식)`,
+        _subject: `[여백스튜디오 예약문의] ${formData.groomName || formData.brideName}님 (${formData.weddingDate} 예식 / ${serviceCategoryLabel})`,
         _replyto: formData.email || 'yeobaek5795@naver.com',
         접수번호: refNum,
         접수일시: now,
+        예약구분: serviceCategoryLabel,
         신랑성함: formData.groomName || '-',
         신부성함: formData.brideName || '-',
         연락처: formData.phone,
@@ -160,7 +367,8 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
         예식일자: formData.weddingDate,
         예식시간: formData.weddingTime,
         예식장소: formData.venueName,
-        선택상품: `${pkgDetails.name} [${pkgDetails.priceText}]`,
+        선택상품: fullPackageName,
+        예상견적: currentEstimate.totalText,
         리뷰이벤트: formData.reviewEvent === 'JOIN' ? '참여함 (보정본 5~10장 우선 발송)' : '참여 안함',
         요청사항: formData.specialRequests || '없음',
       };
@@ -181,7 +389,7 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
     setInquiryResult({
       referenceNumber: refNum,
       submittedAt: now,
-      data: { ...formData },
+      data: { ...formData, serviceType },
     });
     setIsSubmitting(false);
   };
@@ -196,65 +404,139 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
       weddingDate: '',
       weddingTime: '12:00',
       venueName: '',
-      selectedPackage: selectedPackageId || 'album',
+      serviceType: 'CAMERA_ONLY',
+      selectedPackage: 'album',
+      selectedIphonePackage: 'iphone-b',
+      iphoneOptions: {
+        addWonpan: false,
+        addBanquet: false,
+        addPyebaek: false,
+        discountPortrait: false,
+        discountReview: false,
+        discountPartner: false,
+      },
       priceType: 'WESTERN',
       reviewEvent: 'JOIN',
       specialRequests: '',
       agreeToTerms: true,
     });
+    setServiceType('CAMERA_ONLY');
     setErrors({});
   };
-
-  const getPackageDetails = (pkgId: string, priceType: 'NORMAL' | 'WESTERN') => {
-    switch (pkgId) {
-      case 'raw':
-        return {
-          name: '원본형',
-          priceText: priceType === 'WESTERN' ? '40만원 (웨스턴 혜택가 적용)' : '50만원 (일반가 적용)',
-        };
-      case 'raw-retouched':
-        return {
-          name: '원본 + 보정본형',
-          priceText: priceType === 'WESTERN' ? '50만원 (웨스턴 혜택가 적용)' : '60만원 (일반가 적용)',
-        };
-      case 'album':
-        return {
-          name: '화보앨범형 [인기추천]',
-          priceText: priceType === 'WESTERN' ? '70만원 (웨스턴 혜택가 적용)' : '80만원 (일반가 적용)',
-        };
-      case 'premium':
-        return {
-          name: '프리미엄형 [2인 작가]',
-          priceText: priceType === 'WESTERN' ? '95만원 (웨스턴 혜택가 적용)' : '105만원 (일반가 적용)',
-        };
-      default:
-        return {
-          name: '기타 커스텀 스냅 문의',
-          priceText: '상담 후 견적 안내',
-        };
-    }
-  };
-
-  const currentPkgInfo = getPackageDetails(formData.selectedPackage, formData.priceType);
 
   return (
     <section id="reservation" className="py-24 sm:py-32 bg-[#F5F3EF] border-t border-black/5 relative">
       <div className="max-w-5xl mx-auto px-6 lg:px-12">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto mb-16">
+        <div className="text-center max-w-2xl mx-auto mb-14">
           <span className="font-serif-en text-xs sm:text-sm tracking-[0.3em] uppercase text-[#A68F7E] font-medium block mb-3">
             RESERVATION & INQUIRY
           </span>
-          <h2 className="font-serif-kr text-3xl sm:text-4xl font-light text-[#1A1A1A] tracking-tight leading-snug mb-6">
-            본식 스냅 예약 & 견적 문의
+          <h2 className="font-serif-kr text-3xl sm:text-4xl font-light text-[#1A1A1A] tracking-tight leading-snug mb-4">
+            본식 스냅 & 아이폰 스냅 예약 문의
           </h2>
           <p className="text-sm sm:text-base text-[#555555] font-light leading-relaxed">
-            원하시는 예식 일정과 장소를 남겨주시면, 담당 작가가 일정 조회 후 대표 이메일(<strong className="font-medium text-[#1A1A1A]">{studioInfo.email}</strong>) 및 카카오톡으로 실시간 확정 안내를 드립니다.
+            본식 카메라 스냅과 아이폰 스냅을 각각 단독으로 예약하시거나, 함께 예약하여 <strong className="font-medium text-[#1A1A1A]">5만원 동시할인 혜택</strong>을 받으실 수 있습니다.
           </p>
         </div>
 
+        {/* 3-Way Service Selector (Camera Only / iPhone Only / Combo Both) */}
+        <div className="mb-8">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* 1. Camera Only */}
+            <button
+              type="button"
+              onClick={() => handleServiceTypeChange('CAMERA_ONLY')}
+              className={`p-4 rounded-2xl border text-left transition-all duration-300 relative flex flex-col justify-between ${
+                serviceType === 'CAMERA_ONLY'
+                  ? 'bg-white border-[#1A1A1A] shadow-md ring-2 ring-[#1A1A1A]/10'
+                  : 'bg-white/70 border-black/10 hover:border-black/30 hover:bg-white'
+              }`}
+            >
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className={`p-2 rounded-xl ${serviceType === 'CAMERA_ONLY' ? 'bg-[#1A1A1A] text-white' : 'bg-stone-100 text-stone-600'}`}>
+                    <Camera className="w-4 h-4" />
+                  </div>
+                  <span className="font-serif-kr text-sm font-bold text-[#1A1A1A]">
+                    본식 카메라 스냅만
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500 font-light leading-relaxed">
+                  고화질 카메라로 담는 감성 본식 스냅 단독 예약
+                </p>
+              </div>
+              <div className="mt-3 text-[11px] font-medium text-[#A68F7E]">
+                40만원 ~ 105만원 (VAT 별도)
+              </div>
+            </button>
+
+            {/* 2. iPhone Only */}
+            <button
+              type="button"
+              onClick={() => handleServiceTypeChange('IPHONE_ONLY')}
+              className={`p-4 rounded-2xl border text-left transition-all duration-300 relative flex flex-col justify-between ${
+                serviceType === 'IPHONE_ONLY'
+                  ? 'bg-white border-rose-500 shadow-md ring-2 ring-rose-500/10'
+                  : 'bg-white/70 border-black/10 hover:border-rose-300 hover:bg-white'
+              }`}
+            >
+              <div className="absolute top-3 right-3 px-2 py-0.5 rounded-full bg-rose-500 text-white text-[9px] font-bold">
+                NEW
+              </div>
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className={`p-2 rounded-xl ${serviceType === 'IPHONE_ONLY' ? 'bg-rose-500 text-white' : 'bg-rose-50 text-rose-600'}`}>
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <span className="font-serif-kr text-sm font-bold text-[#1A1A1A]">
+                    아이폰 스냅만 (단독)
+                  </span>
+                </div>
+                <p className="text-xs text-stone-500 font-light leading-relaxed">
+                  최신 Pro 기종으로 현장의 온기를 담는 아이폰 단독 예약
+                </p>
+              </div>
+              <div className="mt-3 text-[11px] font-medium text-rose-600">
+                15만원 ~ 30만원 (최대 5만 할인)
+              </div>
+            </button>
+
+            {/* 3. Combo Both */}
+            <button
+              type="button"
+              onClick={() => handleServiceTypeChange('COMBO_BOTH')}
+              className={`p-4 rounded-2xl border text-left transition-all duration-300 relative flex flex-col justify-between ${
+                serviceType === 'COMBO_BOTH'
+                  ? 'bg-stone-900 border-[#A68F7E] text-white shadow-xl ring-2 ring-[#A68F7E]/30 scale-[1.02]'
+                  : 'bg-stone-900/90 border-stone-800 text-white hover:bg-stone-900'
+              }`}
+            >
+              <div className="absolute top-3 right-3 px-2.5 py-0.5 rounded-full bg-[#A68F7E] text-white text-[9px] font-bold tracking-wide">
+                -50,000원 할인
+              </div>
+              <div>
+                <div className="flex items-center space-x-2 mb-2">
+                  <div className="p-2 rounded-xl bg-[#A68F7E]/30 text-[#A68F7E]">
+                    <HeartHandshake className="w-4 h-4" />
+                  </div>
+                  <span className="font-serif-kr text-sm font-bold text-white">
+                    본식 + 아이폰 함께
+                  </span>
+                </div>
+                <p className="text-xs text-stone-300 font-light leading-relaxed">
+                  두 상품을 동시에 예약하고 5만원 즉시 할인 혜택 받기
+                </p>
+              </div>
+              <div className="mt-3 text-[11px] font-medium text-amber-300 flex items-center space-x-1">
+                <span>동시 예약 특전 5만원 즉시 할인</span>
+              </div>
+            </button>
+          </div>
+        </div>
+
         {/* Inquiry Form Bento Box */}
-        <div className="bento-card bg-white rounded-2xl p-8 sm:p-12 shadow-sm border border-black/5">
+        <div className="bento-card bg-white rounded-3xl p-8 sm:p-12 shadow-sm border border-black/5">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Couple Names Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
@@ -262,42 +544,40 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
                 <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
                   <User className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
                   <span>신랑 성함</span>
-                  <span className="text-[#A68F7E] ml-1">*</span>
                 </label>
                 <input
                   type="text"
                   name="groomName"
                   value={formData.groomName}
                   onChange={handleChange}
-                  placeholder="예: 홍길동"
+                  placeholder="신랑님 성함 입력"
                   className="w-full px-4 py-3 bg-[#F5F3EF] border border-black/10 rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:border-[#A68F7E] transition-colors"
                 />
+                {errors.groomName && <p className="text-xs text-red-500 font-light mt-1">{errors.groomName}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
                   <User className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
                   <span>신부 성함</span>
-                  <span className="text-[#A68F7E] ml-1">*</span>
                 </label>
                 <input
                   type="text"
                   name="brideName"
                   value={formData.brideName}
                   onChange={handleChange}
-                  placeholder="예: 성춘향"
+                  placeholder="신부님 성함 입력"
                   className="w-full px-4 py-3 bg-[#F5F3EF] border border-black/10 rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:border-[#A68F7E] transition-colors"
                 />
               </div>
             </div>
-            {errors.groomName && <p className="text-xs text-red-500 font-light">{errors.groomName}</p>}
 
-            {/* Contact & Email */}
+            {/* Contact Details Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
                   <Phone className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
-                  <span>연락처</span>
+                  <span>연락처 (휴대전화)</span>
                   <span className="text-[#A68F7E] ml-1">*</span>
                 </label>
                 <input
@@ -314,20 +594,21 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
               <div>
                 <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
                   <Mail className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
-                  <span>이메일 주소 (확인증 수신용)</span>
+                  <span>이메일 주소</span>
+                  <span className="text-[11px] text-[#888888] font-light ml-2">(견적서 & 확인증 수신)</span>
                 </label>
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="yeobaek@example.com"
+                  placeholder="example@naver.com"
                   className="w-full px-4 py-3 bg-[#F5F3EF] border border-black/10 rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:border-[#A68F7E] transition-colors"
                 />
               </div>
             </div>
 
-            {/* Wedding Date & Time */}
+            {/* Wedding Date & Time Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
@@ -370,131 +651,431 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
               </div>
             </div>
 
-            {/* Venue & Package Selection */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
-                  <MapPin className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
-                  <span>예식 장소 (웨딩홀 이름)</span>
-                  <span className="text-[#A68F7E] ml-1">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="venueName"
-                  value={formData.venueName}
-                  onChange={handleChange}
-                  placeholder="예: 웨스턴컨벤션, 더라움, 아모리스 등"
-                  className="w-full px-4 py-3 bg-[#F5F3EF] border border-black/10 rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:border-[#A68F7E] transition-colors"
-                />
-                {errors.venueName && <p className="text-xs text-red-500 font-light mt-1">{errors.venueName}</p>}
-              </div>
-
-              <div>
-                <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
-                  <span>선택 상품 패키지</span>
-                </label>
-                <select
-                  name="selectedPackage"
-                  value={formData.selectedPackage}
-                  onChange={handleChange}
-                  className="w-full px-4 py-3 bg-[#F5F3EF] border border-black/10 rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:border-[#A68F7E] transition-colors font-medium"
-                >
-                  <option value="raw">1. 원본형 (데이터 전송 전용)</option>
-                  <option value="raw-retouched">2. 원본 + 보정본형</option>
-                  <option value="album">3. 화보앨범형 [인기추천 - 앨범 3권 포함]</option>
-                  <option value="premium">4. 프리미엄형 [2인 작가 촬영]</option>
-                  <option value="type-custom">5. 기타 맞춤 스냅 문의 (야외 스냅, 메이크업 추가 등)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Price Type Selection (General vs Western Discount) */}
-            <div className="bg-[#FAFAFA] p-5 rounded-xl border border-black/5 space-y-3">
-              <label className="block text-xs font-serif-kr font-semibold text-[#1A1A1A] flex items-center">
-                <Tag className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
-                <span>적용 가격 금액 선택</span>
-                <span className="text-xs font-normal text-[#888888] ml-2">(일반가 / 웨스턴 제휴 혜택가 구분)</span>
+            {/* Venue Name */}
+            <div>
+              <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
+                <MapPin className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
+                <span>예식 장소 (웨딩홀 이름)</span>
+                <span className="text-[#A68F7E] ml-1">*</span>
               </label>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <label
-                  onClick={() => setFormData((prev) => ({ ...prev, priceType: 'WESTERN' }))}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start space-x-3 ${
-                    formData.priceType === 'WESTERN'
-                      ? 'bg-amber-50/70 border-amber-400 text-amber-950 shadow-xs'
-                      : 'bg-white border-black/10 hover:border-gray-300 text-gray-700'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="priceType"
-                    value="WESTERN"
-                    checked={formData.priceType === 'WESTERN'}
-                    onChange={() => {}}
-                    className="mt-0.5 accent-amber-600"
-                  />
-                  <div>
-                    <div className="text-xs font-bold flex items-center space-x-1">
-                      <span>🌟 웨스턴 제휴 혜택가 적용</span>
-                      <span className="bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-serif-en uppercase">SPECIAL</span>
-                    </div>
-                    <p className="text-[11px] opacity-80 mt-1 leading-snug">
-                      웨스턴컨벤션/제휴 웨딩홀 예식 고객님께 제공되는 특별 할인 금액입니다.
-                    </p>
-                  </div>
-                </label>
-
-                <label
-                  onClick={() => setFormData((prev) => ({ ...prev, priceType: 'NORMAL' }))}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start space-x-3 ${
-                    formData.priceType === 'NORMAL'
-                      ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-xs'
-                      : 'bg-white border-black/10 hover:border-gray-300 text-gray-700'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="priceType"
-                    value="NORMAL"
-                    checked={formData.priceType === 'NORMAL'}
-                    onChange={() => {}}
-                    className="mt-0.5 accent-[#A68F7E]"
-                  />
-                  <div>
-                    <div className="text-xs font-bold">🏷️ 일반가 적용</div>
-                    <p className="text-[11px] opacity-80 mt-1 leading-snug">
-                      일반 웨딩홀 및 야외/출장 예식 기준 표준 안내 금액입니다.
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* Current Calculated Price Preview */}
-              <div className="p-3 bg-white rounded-lg border border-black/5 text-xs flex justify-between items-center text-[#333333]">
-                <span className="text-[#666666]">선택 상품 예상 금액:</span>
-                <span className="font-serif-kr font-bold text-sm text-rose-600">
-                  {currentPkgInfo.priceText}
-                </span>
-              </div>
+              <input
+                type="text"
+                name="venueName"
+                value={formData.venueName}
+                onChange={handleChange}
+                placeholder="예: 웨스턴라이프호텔, 더라움, 아모리스 등"
+                className="w-full px-4 py-3 bg-[#F5F3EF] border border-black/10 rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:border-[#A68F7E] transition-colors"
+              />
+              {errors.venueName && <p className="text-xs text-red-500 font-light mt-1">{errors.venueName}</p>}
             </div>
 
-            {/* Review Event Participation */}
-            <div className="bg-[#FAF9F5] p-5 rounded-xl border border-[#A68F7E]/20 space-y-3">
+            {/* ----------------- SPECIFIC PACKAGE SELECTIONS PER SERVICE TYPE ----------------- */}
+
+            {/* MODE 1: CAMERA SNAP ONLY */}
+            {serviceType === 'CAMERA_ONLY' && (
+              <div className="bg-[#FAF9F6] p-6 rounded-2xl border border-stone-200/80 space-y-5 animate-fadeIn">
+                <div className="flex items-center space-x-2 pb-3 border-b border-stone-200">
+                  <Camera className="w-4 h-4 text-[#A68F7E]" />
+                  <h4 className="font-serif-kr text-sm font-bold text-stone-900">
+                    본식 카메라 스냅 상품 선택
+                  </h4>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1.5">
+                      본식 스냅 패키지
+                    </label>
+                    <select
+                      name="selectedPackage"
+                      value={formData.selectedPackage}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-white border border-stone-300 rounded-xl text-sm text-stone-900 focus:outline-none focus:border-[#A68F7E] font-medium"
+                    >
+                      <option value="raw">1. 원본형 (데이터 전송 전용)</option>
+                      <option value="raw-retouched">2. 원본 + 보정본형</option>
+                      <option value="album">3. 화보앨범형 [인기추천 - 앨범 3권 포함]</option>
+                      <option value="premium">4. 프리미엄형 [2인 작가 촬영]</option>
+                      <option value="type-custom">기타 커스텀 스냅 문의</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-stone-700 mb-1.5">
+                      적용 금액 구분
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, priceType: 'WESTERN' }))}
+                        className={`py-3 px-3 rounded-xl border text-xs font-medium transition-all ${
+                          formData.priceType === 'WESTERN'
+                            ? 'bg-amber-500/10 border-amber-500 text-amber-900 font-bold shadow-xs'
+                            : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'
+                        }`}
+                      >
+                        🌟 웨스턴 제휴가
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, priceType: 'NORMAL' }))}
+                        className={`py-3 px-3 rounded-xl border text-xs font-medium transition-all ${
+                          formData.priceType === 'NORMAL'
+                            ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] font-bold shadow-xs'
+                            : 'bg-white border-stone-200 text-stone-600 hover:bg-stone-50'
+                        }`}
+                      >
+                        🏷️ 일반 스냅가
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-3.5 bg-white rounded-xl border border-stone-200/60 text-xs flex justify-between items-center text-stone-700">
+                  <span className="text-stone-500">선택 패키지 금액 (VAT 별도)</span>
+                  <span className="font-bold text-stone-900 font-serif-kr text-sm">
+                    {estimate.totalText}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* MODE 2: IPHONE SNAP ONLY */}
+            {serviceType === 'IPHONE_ONLY' && (
+              <div className="bg-rose-50/40 p-6 rounded-2xl border border-rose-200/70 space-y-6 animate-fadeIn">
+                <div className="flex items-center justify-between pb-3 border-b border-rose-200/60">
+                  <div className="flex items-center space-x-2">
+                    <Smartphone className="w-4 h-4 text-rose-600" />
+                    <h4 className="font-serif-kr text-sm font-bold text-stone-900">
+                      아이폰 스냅 (iPhone Snap) 단독 상품 선택
+                    </h4>
+                  </div>
+                  <span className="text-[11px] text-rose-600 font-medium font-serif-en">
+                    @yeobaek_iphone_iksan
+                  </span>
+                </div>
+
+                {/* iPhone Package Radios */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <label
+                    onClick={() => setFormData((prev) => ({ ...prev, selectedIphonePackage: 'iphone-a', selectedPackage: 'iphone-a' }))}
+                    className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                      (formData.selectedIphonePackage || formData.selectedPackage) === 'iphone-a'
+                        ? 'bg-white border-rose-500 shadow-md ring-2 ring-rose-500/10'
+                        : 'bg-white/80 border-stone-200 hover:border-rose-300'
+                    }`}
+                  >
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-serif-en text-sm font-bold text-stone-900">
+                          A. SIGNATURE (시그니처)
+                        </span>
+                        <span className="font-bold text-stone-900 text-sm">250,000원</span>
+                      </div>
+                      <p className="text-[11px] text-stone-600 mt-1">
+                        신부대기실·본식·플라워샤워·원판 (예식 60분 전)
+                      </p>
+                      <p className="text-[10px] text-stone-400 mt-0.5">
+                        원본 사진/영상 전체 제공 + 작가별 보정본 5장
+                      </p>
+                    </div>
+                    <div className="mt-3 text-[11px] text-rose-600 font-medium">
+                      (최대 할인 적용시 15만원)
+                    </div>
+                  </label>
+
+                  <label
+                    onClick={() => setFormData((prev) => ({ ...prev, selectedIphonePackage: 'iphone-b', selectedPackage: 'iphone-b' }))}
+                    className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between relative ${
+                      (formData.selectedIphonePackage || formData.selectedPackage) === 'iphone-b'
+                        ? 'bg-white border-rose-500 shadow-md ring-2 ring-rose-500/10'
+                        : 'bg-white/80 border-stone-200 hover:border-rose-300'
+                    }`}
+                  >
+                    <span className="absolute -top-2.5 right-3 px-2 py-0.2 bg-[#A68F7E] text-white text-[9px] font-bold rounded-full">
+                      추천
+                    </span>
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="font-serif-en text-sm font-bold text-stone-900">
+                          B. PREMIUM (프리미엄)
+                        </span>
+                        <span className="font-bold text-stone-900 text-sm">300,000원</span>
+                      </div>
+                      <p className="text-[11px] text-stone-600 mt-1">
+                        신부대기실·본식·플라워샤워·원판 (예식 90분 전)
+                      </p>
+                      <p className="text-[10px] text-stone-400 mt-0.5">
+                        원본 사진/영상 전체 제공 + 작가별 보정본 10장
+                      </p>
+                    </div>
+                    <div className="mt-3 text-[11px] text-rose-600 font-medium">
+                      (최대 할인 적용시 20만원)
+                    </div>
+                  </label>
+                </div>
+
+                {/* iPhone Discounts Checkboxes */}
+                <div>
+                  <span className="block text-xs font-bold text-stone-800 mb-2 flex items-center">
+                    <Gift className="w-3.5 h-3.5 mr-1 text-rose-500" />
+                    <span>할인 이벤트 선택 (중복 적용 가능, 최대 5만원 할인)</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <label className={`p-3 rounded-xl border text-xs cursor-pointer flex items-center justify-between ${
+                      formData.iphoneOptions?.discountPortrait ? 'bg-rose-500/10 border-rose-400 text-rose-950 font-medium' : 'bg-white border-stone-200 text-stone-600'
+                    }`}>
+                      <span>초상권 동의 할인</span>
+                      <strong className="text-rose-600 font-bold">-2만원</strong>
+                    </label>
+
+                    <label className={`p-3 rounded-xl border text-xs cursor-pointer flex items-center justify-between ${
+                      formData.iphoneOptions?.discountReview ? 'bg-rose-500/10 border-rose-400 text-rose-950 font-medium' : 'bg-white border-stone-200 text-stone-600'
+                    }`}>
+                      <span>후기 이벤트 할인</span>
+                      <strong className="text-rose-600 font-bold">-2만원</strong>
+                    </label>
+
+                    <label className={`p-3 rounded-xl border text-xs cursor-pointer flex items-center justify-between ${
+                      formData.iphoneOptions?.discountPartner ? 'bg-rose-500/10 border-rose-400 text-rose-950 font-medium' : 'bg-white border-stone-200 text-stone-600'
+                    }`}>
+                      <span>짝꿍 할인</span>
+                      <strong className="text-rose-600 font-bold">-1만원</strong>
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-3 mt-2 text-[11px] text-stone-500">
+                    <button
+                      type="button"
+                      onClick={() => handleIphoneOptionToggle('discountPortrait')}
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] ${formData.iphoneOptions?.discountPortrait ? 'bg-rose-500 text-white border-rose-500' : 'bg-stone-100 text-stone-600'}`}
+                    >
+                      초상권 동의 토글
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleIphoneOptionToggle('discountReview')}
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] ${formData.iphoneOptions?.discountReview ? 'bg-rose-500 text-white border-rose-500' : 'bg-stone-100 text-stone-600'}`}
+                    >
+                      후기 이벤트 토글
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleIphoneOptionToggle('discountPartner')}
+                      className={`px-2.5 py-1 rounded-lg border text-[11px] ${formData.iphoneOptions?.discountPartner ? 'bg-rose-500 text-white border-rose-500' : 'bg-stone-100 text-stone-600'}`}
+                    >
+                      짝꿍 할인 토글
+                    </button>
+                  </div>
+                </div>
+
+                {/* iPhone Add-on Options */}
+                <div>
+                  <span className="block text-xs font-bold text-stone-800 mb-2 flex items-center">
+                    <Plus className="w-3.5 h-3.5 mr-1 text-[#A68F7E]" />
+                    <span>추가 옵션 항목</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => handleIphoneOptionToggle('addWonpan')}
+                      className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-colors ${
+                        formData.iphoneOptions?.addWonpan ? 'bg-[#A68F7E]/15 border-[#A68F7E] text-stone-900 font-semibold' : 'bg-white border-stone-200 text-stone-600'
+                      }`}
+                    >
+                      <span>원판 촬영 추가</span>
+                      <strong>+3만원</strong>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleIphoneOptionToggle('addBanquet')}
+                      className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-colors ${
+                        formData.iphoneOptions?.addBanquet ? 'bg-[#A68F7E]/15 border-[#A68F7E] text-stone-900 font-semibold' : 'bg-white border-stone-200 text-stone-600'
+                      }`}
+                    >
+                      <span>연회장 촬영 추가</span>
+                      <strong>+3만원</strong>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleIphoneOptionToggle('addPyebaek')}
+                      className={`p-3 rounded-xl border text-xs flex items-center justify-between transition-colors ${
+                        formData.iphoneOptions?.addPyebaek ? 'bg-[#A68F7E]/15 border-[#A68F7E] text-stone-900 font-semibold' : 'bg-white border-stone-200 text-stone-600'
+                      }`}
+                    >
+                      <span>폐백 촬영 추가</span>
+                      <strong>+3만원</strong>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Estimate Preview */}
+                <div className="p-4 bg-white rounded-xl border border-rose-200 text-xs flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                  <span className="text-stone-600">
+                    아이폰 스냅 예상 견적 (기본가 - 할인 + 옵션, VAT 별도)
+                  </span>
+                  <span className="font-bold text-rose-600 font-serif-kr text-base">
+                    {estimate.totalText}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* MODE 3: COMBO BOTH (Main Snap + iPhone Snap together) */}
+            {serviceType === 'COMBO_BOTH' && (
+              <div className="bg-[#1A1A1A] text-white p-6 sm:p-8 rounded-3xl border border-[#A68F7E]/50 space-y-6 shadow-xl animate-fadeIn">
+                {/* Special Combo Badge Header */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/10">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#A68F7E] text-white flex items-center justify-center shrink-0">
+                      <HeartHandshake className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-serif-kr text-base font-bold text-white">
+                          본식스냅 + 아이폰스냅 동시예약 특전
+                        </h4>
+                        <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">
+                          -50,000원 할인
+                        </span>
+                      </div>
+                      <p className="text-xs text-white/70 font-light mt-0.5">
+                        본식 카메라 스냅과 아이폰 감성 스냅을 함께 예약하여 5만원 추가 할인 혜택을 받으세요.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 1: Camera Snap Selection */}
+                <div className="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/10">
+                  <span className="font-serif-kr text-xs font-bold text-amber-300 block flex items-center">
+                    <Camera className="w-3.5 h-3.5 mr-1.5" />
+                    <span>STEP 1. 본식 카메라 스냅 상품 선택</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <select
+                      name="selectedPackage"
+                      value={formData.selectedPackage}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 bg-[#2A2A2A] border border-white/20 rounded-xl text-xs text-white focus:outline-none focus:border-[#A68F7E]"
+                    >
+                      <option value="raw">1. 원본형 (데이터)</option>
+                      <option value="raw-retouched">2. 원본 + 보정본형</option>
+                      <option value="album">3. 화보앨범형 [인기추천]</option>
+                      <option value="premium">4. 프리미엄형 [2인 작가]</option>
+                      <option value="type-custom">기타 커스텀 스냅</option>
+                    </select>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, priceType: 'WESTERN' }))}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
+                          formData.priceType === 'WESTERN'
+                            ? 'bg-[#A68F7E] text-white border-[#A68F7E] font-bold'
+                            : 'bg-[#2A2A2A] border-white/10 text-white/70 hover:bg-white/10'
+                        }`}
+                      >
+                        🌟 웨스턴 제휴가
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFormData((prev) => ({ ...prev, priceType: 'NORMAL' }))}
+                        className={`py-2.5 px-3 rounded-xl border text-xs font-medium transition-all ${
+                          formData.priceType === 'NORMAL'
+                            ? 'bg-white text-stone-900 border-white font-bold'
+                            : 'bg-[#2A2A2A] border-white/10 text-white/70 hover:bg-white/10'
+                        }`}
+                      >
+                        🏷️ 일반 스냅가
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 2: iPhone Snap Selection */}
+                <div className="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/10">
+                  <span className="font-serif-kr text-xs font-bold text-rose-300 block flex items-center">
+                    <Smartphone className="w-3.5 h-3.5 mr-1.5" />
+                    <span>STEP 2. 함께할 아이폰 스냅 상품 선택</span>
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <label
+                      onClick={() => setFormData((prev) => ({ ...prev, selectedIphonePackage: 'iphone-a' }))}
+                      className={`p-3.5 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${
+                        formData.selectedIphonePackage === 'iphone-a'
+                          ? 'bg-rose-500/20 border-rose-400 text-white font-medium shadow-xs'
+                          : 'bg-[#2A2A2A] border-white/10 text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      <div>
+                        <span className="text-xs font-bold block">A. 시그니처 (예식 60분 전)</span>
+                        <span className="text-[10px] text-white/60">보정본 5장 + 전체 원본 당일 전달</span>
+                      </div>
+                      <strong className="text-xs font-serif-kr">250,000원</strong>
+                    </label>
+
+                    <label
+                      onClick={() => setFormData((prev) => ({ ...prev, selectedIphonePackage: 'iphone-b' }))}
+                      className={`p-3.5 rounded-xl border cursor-pointer transition-all flex justify-between items-center ${
+                        formData.selectedIphonePackage === 'iphone-b'
+                          ? 'bg-rose-500/20 border-rose-400 text-white font-medium shadow-xs'
+                          : 'bg-[#2A2A2A] border-white/10 text-white/70 hover:bg-white/10'
+                      }`}
+                    >
+                      <div>
+                        <div className="flex items-center space-x-1.5">
+                          <span className="text-xs font-bold block">B. 프리미엄 (예식 90분 전)</span>
+                          <span className="px-1.5 py-0.2 bg-[#A68F7E] text-[9px] rounded-full">추천</span>
+                        </div>
+                        <span className="text-[10px] text-white/60">보정본 10장 + 전체 원본 당일 전달</span>
+                      </div>
+                      <strong className="text-xs font-serif-kr">300,000원</strong>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Step 3: Total Calculation with -50,000 combo discount */}
+                <div className="bg-[#2A2A2A] p-4 sm:p-5 rounded-2xl border border-white/15 space-y-2">
+                  <div className="flex justify-between items-center text-xs text-white/70">
+                    <span>본식스냅 금액:</span>
+                    <span>{estimate.cameraPrice.toLocaleString()}원</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-white/70">
+                    <span>아이폰스냅 금액:</span>
+                    <span>{estimate.iphonePrice.toLocaleString()}원</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs text-rose-400 font-bold border-t border-white/10 pt-2">
+                    <span className="flex items-center space-x-1">
+                      <Percent className="w-3.5 h-3.5" />
+                      <span>동시 예약 특별 할인:</span>
+                    </span>
+                    <span>- 50,000원</span>
+                  </div>
+                  <div className="flex justify-between items-center pt-2 border-t border-white/15 text-sm sm:text-base font-bold">
+                    <span className="text-white">최종 예상 견적 (VAT 별도)</span>
+                    <span className="text-amber-300 font-serif-kr text-lg sm:text-xl">
+                      {estimate.totalText}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Review Event (For Camera Snap or General) */}
+            <div className="bg-[#FAF9F6] p-5 rounded-xl border border-black/5 space-y-3">
               <label className="block text-xs font-serif-kr font-semibold text-[#1A1A1A] flex items-center">
-                <Gift className="w-4 h-4 mr-1.5 text-[#A68F7E]" />
-                <span>리뷰 이벤트 참여 여부 선택</span>
-                <span className="bg-[#A68F7E] text-white text-[10px] px-2 py-0.5 rounded-full ml-2 font-light">
-                  혜택: 보정본 5~10장 우선 발송
-                </span>
+                <Gift className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
+                <span>스튜디오 후기 이벤트 참여 여부</span>
               </label>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <label
                   onClick={() => setFormData((prev) => ({ ...prev, reviewEvent: 'JOIN' }))}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start space-x-3 ${
+                  className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start space-x-3 ${
                     formData.reviewEvent === 'JOIN'
-                      ? 'bg-emerald-50/80 border-emerald-400 text-emerald-950 shadow-xs'
+                      ? 'bg-emerald-50/70 border-emerald-400 text-emerald-950 shadow-xs'
                       : 'bg-white border-black/10 hover:border-gray-300 text-gray-700'
                   }`}
                 >
@@ -507,20 +1088,21 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
                     className="mt-0.5 accent-emerald-600"
                   />
                   <div>
-                    <div className="text-xs font-bold text-emerald-900 flex items-center space-x-1">
-                      <span>🎁 리뷰 이벤트 참여함</span>
+                    <div className="text-xs font-bold flex items-center space-x-1">
+                      <span>참여함 (보정본 5~10매 우선 발송)</span>
+                      <span className="bg-emerald-600 text-white text-[9px] px-1.5 py-0.2 rounded-full font-serif-en uppercase">혜택</span>
                     </div>
-                    <p className="text-[11px] text-emerald-800/80 mt-1 leading-snug">
-                      예식 후 블로그/인스타그램/카페 리뷰 작성 조건으로 <strong>수정본 5~10장을 선발송</strong>해 드립니다.
+                    <p className="text-[11px] opacity-80 mt-1 leading-snug">
+                      예식 후 5일 이내 베스트컷 선공개 및 블로그/인스타 리뷰 작성시 혜택이 적용됩니다.
                     </p>
                   </div>
                 </label>
 
                 <label
                   onClick={() => setFormData((prev) => ({ ...prev, reviewEvent: 'NONE' }))}
-                  className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-start space-x-3 ${
+                  className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start space-x-3 ${
                     formData.reviewEvent === 'NONE'
-                      ? 'bg-gray-100 border-gray-400 text-gray-900 shadow-xs'
+                      ? 'bg-[#1A1A1A] text-white border-[#1A1A1A] shadow-xs'
                       : 'bg-white border-black/10 hover:border-gray-300 text-gray-700'
                   }`}
                 >
@@ -530,29 +1112,30 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
                     value="NONE"
                     checked={formData.reviewEvent === 'NONE'}
                     onChange={() => {}}
-                    className="mt-0.5 accent-gray-600"
+                    className="mt-0.5 accent-[#A68F7E]"
                   />
                   <div>
-                    <div className="text-xs font-bold">참여 안함</div>
-                    <p className="text-[11px] opacity-70 mt-1 leading-snug">
-                      리뷰 이벤트 혜택 없이 기본 일정대로 보정작업이 진행됩니다.
+                    <div className="text-xs font-bold">참여 안 함</div>
+                    <p className="text-[11px] opacity-80 mt-1 leading-snug">
+                      별도 후기 작성 없이 표준 일정에 맞춰 작업물이 전달됩니다.
                     </p>
                   </div>
                 </label>
               </div>
             </div>
 
-            {/* Special Requests */}
+            {/* Special Requests / Additional Inquiries */}
             <div>
               <label className="block text-xs font-serif-kr font-medium text-[#1A1A1A] mb-2 flex items-center">
                 <FileText className="w-3.5 h-3.5 mr-1.5 text-[#A68F7E]" />
-                <span>기타 요청사항 및 문의 내용</span>
+                <span>추가 문의사항 및 요청사항</span>
+                <span className="text-[11px] text-[#888888] font-light ml-2">(선택 입력)</span>
               </label>
               <textarea
                 name="specialRequests"
                 value={formData.specialRequests}
                 onChange={handleChange}
-                rows={4}
+                rows={3}
                 placeholder="어두운 홀 연출, 메이크업 숍 추가 여부, 선호하는 색감이나 특별히 원하시는 스냅 분위기를 자유롭게 작성해 주세요."
                 className="w-full px-4 py-3 bg-[#F5F3EF] border border-black/10 rounded-lg text-sm text-[#1A1A1A] focus:outline-none focus:border-[#A68F7E] transition-colors resize-none"
               />
@@ -588,7 +1171,13 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
               ) : (
                 <>
                   <Send className="w-4 h-4 text-[#A68F7E]" />
-                  <span>예약 문의 제출하기</span>
+                  <span>
+                    {serviceType === 'COMBO_BOTH'
+                      ? '본식스냅 + 아이폰스냅 동시예약 문의 제출'
+                      : serviceType === 'IPHONE_ONLY'
+                      ? '아이폰 스냅 단독 예약 문의 제출'
+                      : '본식 카메라 스냅 예약 문의 제출'}
+                  </span>
                 </>
               )}
             </button>
@@ -661,12 +1250,23 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
               </div>
 
               <div className="pt-2 border-t border-black/5">
-                <span className="text-[#888888] block text-[11px]">선택 상품</span>
-                <span className="font-medium text-[#1A1A1A]">
-                  {getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).name}
-                  <span className="text-[#A68F7E] ml-1 font-normal">
-                    ({getPackageDetails(inquiryResult.data.selectedPackage, inquiryResult.data.priceType).priceText})
-                  </span>
+                <span className="text-[#888888] block text-[11px]">예약 구분</span>
+                <span className="font-bold text-[#1A1A1A]">
+                  {inquiryResult.data.serviceType === 'COMBO_BOTH'
+                    ? '💎 본식스냅 + 아이폰스냅 동시예약 (5만원 할인 적용)'
+                    : inquiryResult.data.serviceType === 'IPHONE_ONLY'
+                    ? '📱 아이폰 스냅만 단독 예약'
+                    : '📸 본식 카메라 스냅만 예약'}
+                </span>
+              </div>
+
+              <div className="pt-1">
+                <span className="text-[#888888] block text-[11px]">선택 상품 및 예상 견적</span>
+                <span className="font-medium text-[#1A1A1A] block">
+                  {estimate.title}
+                </span>
+                <span className="text-[#A68F7E] font-bold text-xs mt-0.5 block">
+                  예상 금액: {estimate.totalText}
                 </span>
               </div>
 
@@ -710,5 +1310,3 @@ export const ReservationSection: React.FC<ReservationSectionProps> = ({ selected
     </section>
   );
 };
-
-

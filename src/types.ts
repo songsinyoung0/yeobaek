@@ -34,6 +34,8 @@ export interface HeroSlide {
   venue: string;
 }
 
+export type ReservationServiceType = 'CAMERA_ONLY' | 'IPHONE_ONLY' | 'COMBO_BOTH';
+
 export interface ReservationFormData {
   groomName: string;
   brideName: string;
@@ -42,7 +44,17 @@ export interface ReservationFormData {
   weddingDate: string;
   weddingTime: string;
   venueName: string;
+  serviceType?: ReservationServiceType;
   selectedPackage: string;
+  selectedIphonePackage?: string;
+  iphoneOptions?: {
+    addWonpan?: boolean;
+    addBanquet?: boolean;
+    addPyebaek?: boolean;
+    discountPortrait?: boolean;
+    discountReview?: boolean;
+    discountPartner?: boolean;
+  };
   priceType: 'NORMAL' | 'WESTERN';
   reviewEvent: 'JOIN' | 'NONE';
   specialRequests: string;

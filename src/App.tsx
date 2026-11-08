@@ -27,6 +27,22 @@ function MainApp() {
 
   const handleNavigate = (sectionId: string) => {
     setActiveSection(sectionId);
+    if (sectionId === 'iphone-snap') {
+      window.location.hash = '#iphone-snap';
+      const pricingEl = document.getElementById('pricing');
+      if (pricingEl) {
+        pricingEl.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
+    if (sectionId === 'iphone-gallery') {
+      window.location.hash = '#iphone-gallery';
+      const galleryEl = document.getElementById('gallery');
+      if (galleryEl) {
+        galleryEl.scrollIntoView({ behavior: 'smooth' });
+      }
+      return;
+    }
     const element = document.getElementById(sectionId);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -86,7 +102,10 @@ function MainApp() {
       <main className="flex-grow">
         <HeroSection onNavigate={handleNavigate} />
         <AboutSection />
-        <GallerySection />
+        <GallerySection
+          onNavigateToPricing={() => handleNavigate('pricing')}
+          onNavigateToReservation={() => handleNavigate('reservation')}
+        />
         <PricingSection onSelectPackage={handleSelectPackage} />
         <ReservationSection selectedPackageId={selectedPackageId} />
         <ProcessFaqSection />

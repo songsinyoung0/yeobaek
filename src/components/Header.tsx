@@ -10,10 +10,25 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { content } = useSiteContent();
   const { studioInfo } = content;
+  const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [instaMenuOpen, setInstaMenuOpen] = useState(false);
+
+  // Close insta menu when clicking outside
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest('#insta-menu-wrapper')) {
+        setInstaMenuOpen(false);
+      }
+    };
+    if (instaMenuOpen) {
+      document.addEventListener('click', handleOutsideClick);
+    }
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [instaMenuOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,7 +41,8 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
   const navItems = [
     { id: 'about', label: 'ABOUT', krLabel: '스튜디오 소개' },
     { id: 'gallery', label: 'GALLERY', krLabel: '포트폴리오' },
-    { id: 'pricing', label: 'PRICING', krLabel: '상품 & 가격' },
+    { id: 'pricing', label: 'PRICING', krLabel: '본식스냅' },
+    { id: 'iphone-snap', label: 'iPHONE SNAP', krLabel: '아이폰스냅 (NEW)' },
     { id: 'reservation', label: 'RESERVATION', krLabel: '예약 문의' },
     { id: 'faq', label: 'FAQ', krLabel: '이용 안내' },
   ];
@@ -100,7 +116,14 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
                     : 'text-white/85 hover:text-white'
                 }`}
               >
-                <span>{item.label}</span>
+                <span className="inline-flex items-center space-x-1.5">
+                  <span>{item.label}</span>
+                  {item.id === 'iphone-snap' && (
+                    <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[8px] font-sans font-bold tracking-normal leading-none shadow-xs">
+                      NEW
+                    </span>
+                  )}
+                </span>
               </button>
             );
           })}
@@ -108,18 +131,67 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
 
         {/* Desktop CTA Button */}
         <div className="hidden md:flex items-center space-x-3">
-          <a
-            href={studioInfo.instagram || "https://www.instagram.com/yeobaek_studio_iksan/"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`p-2 rounded-full transition-colors ${
-              isScrolled ? 'text-[#555555] hover:text-[#A68F7E]' : 'text-white/80 hover:text-white'
-            }`}
-            aria-label="여백스튜디오 인스타그램"
-            title="인스타그램"
-          >
-            <Instagram className="w-4 h-4" />
-          </a>
+          {/* Instagram Dropdown Selector for 2 Accounts */}
+          <div id="insta-menu-wrapper" className="relative">
+            <button
+              onClick={() => setInstaMenuOpen(!instaMenuOpen)}
+              className={`p-2 rounded-full transition-colors flex items-center space-x-1 ${
+                isScrolled ? 'text-[#555555] hover:text-[#A68F7E]' : 'text-white/85 hover:text-white'
+              }`}
+              aria-label="여백스튜디오 인스타그램 계정 보기"
+              title="인스타그램 계정 선택"
+            >
+              <Instagram className="w-4 h-4 text-pink-400" />
+              <span className="text-[10px] font-serif-en tracking-wider">INSTA</span>
+            </button>
+
+            {instaMenuOpen && (
+              <div className="absolute top-full right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-black/10 p-2 z-50 text-[#1A1A1A] animate-fadeIn">
+                <div className="text-[10px] font-serif-en tracking-wider text-[#888888] px-3 py-1 border-b border-black/5 font-semibold">
+                  OFFICIAL INSTAGRAM
+                </div>
+                <a
+                  href={studioInfo.instagram || "https://www.instagram.com/yeobaek_studio_iksan/"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2.5 p-2.5 rounded-lg hover:bg-[#F5F3EF] transition-colors group"
+                  onClick={() => setInstaMenuOpen(false)}
+                >
+                  <Instagram className="w-4 h-4 text-rose-500 shrink-0" />
+                  <div className="flex flex-col text-left">
+                    <span className="text-xs font-semibold text-[#1A1A1A] group-hover:text-[#A68F7E]">
+                      본식 스냅 공식
+                    </span>
+                    <span className="text-[11px] text-[#777777] font-mono">
+                      @yeobaek_studio_iksan
+                    </span>
+                  </div>
+                </a>
+                <a
+                  href={studioInfo.instagramIphone || "https://www.instagram.com/yeobaek_iphone_iksan/"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2.5 p-2.5 rounded-lg hover:bg-[#F5F3EF] transition-colors group border-t border-black/5"
+                  onClick={() => setInstaMenuOpen(false)}
+                >
+                  <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600 flex items-center justify-center text-white text-[9px] font-bold shrink-0">
+                    i
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <div className="flex items-center space-x-1">
+                      <span className="text-xs font-semibold text-[#1A1A1A] group-hover:text-[#A68F7E]">
+                        아이폰 스냅 오픈
+                      </span>
+                      <span className="px-1.5 py-0.2 bg-rose-500 text-white text-[9px] rounded-full">NEW</span>
+                    </div>
+                    <span className="text-[11px] text-[#777777] font-mono">
+                      @yeobaek_iphone_iksan
+                    </span>
+                  </div>
+                </a>
+              </div>
+            )}
+          </div>
 
           <a
             href={studioInfo.kakaoLink || "https://pf.kakao.com/_AxdWxgn"}
@@ -148,19 +220,44 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
 
         {/* Mobile Header Actions (Instagram, KakaoTalk, Hamburger Menu) */}
         <div className="flex md:hidden items-center space-x-2">
-          {/* Mobile Instagram Button */}
-          <a
-            href={studioInfo.instagram || "https://www.instagram.com/yeobaek_studio_iksan/"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`p-2 rounded-full transition-colors flex items-center justify-center ${
-              isScrolled ? 'text-[#1A1A1A] hover:text-[#A68F7E]' : 'text-white hover:text-[#EAE7E2]'
-            }`}
-            aria-label="여백스튜디오 인스타그램"
-            title="인스타그램"
-          >
-            <Instagram className="w-4 h-4" />
-          </a>
+          {/* Mobile Instagram Dropdown Trigger */}
+          <div id="insta-menu-wrapper" className="relative">
+            <button
+              onClick={() => setInstaMenuOpen(!instaMenuOpen)}
+              className={`p-2 rounded-full transition-colors flex items-center justify-center ${
+                isScrolled ? 'text-[#1A1A1A] hover:text-[#A68F7E]' : 'text-white hover:text-[#EAE7E2]'
+              }`}
+              aria-label="여백스튜디오 인스타그램"
+              title="인스타그램 계정"
+            >
+              <Instagram className="w-4 h-4 text-pink-400" />
+            </button>
+
+            {instaMenuOpen && (
+              <div className="absolute top-full right-0 mt-2 w-56 bg-white rounded-xl shadow-2xl border border-black/10 p-2 z-50 text-[#1A1A1A] animate-fadeIn">
+                <a
+                  href={studioInfo.instagram || "https://www.instagram.com/yeobaek_studio_iksan/"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-[#F5F3EF] text-xs"
+                  onClick={() => setInstaMenuOpen(false)}
+                >
+                  <Instagram className="w-3.5 h-3.5 text-rose-500 shrink-0" />
+                  <span className="font-medium">본식 @yeobaek_studio_iksan</span>
+                </a>
+                <a
+                  href={studioInfo.instagramIphone || "https://www.instagram.com/yeobaek_iphone_iksan/"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-[#F5F3EF] text-xs border-t border-black/5"
+                  onClick={() => setInstaMenuOpen(false)}
+                >
+                  <span className="w-3.5 h-3.5 rounded-full bg-rose-500 text-white text-[9px] flex items-center justify-center font-bold">i</span>
+                  <span className="font-medium text-rose-700">아이폰 @yeobaek_iphone_iksan</span>
+                </a>
+              </div>
+            )}
+          </div>
 
           {/* Mobile KakaoTalk Button */}
           <a
@@ -231,6 +328,29 @@ export const Header: React.FC<HeaderProps> = ({ activeSection, onNavigate }) => 
               <KakaoIcon className="w-4 h-4 fill-current" />
               <span>카카오톡 채널 1:1 상담 바로가기</span>
             </a>
+
+            {/* Dual Instagram Quick Links in Mobile Menu */}
+            <div className="grid grid-cols-2 gap-2 pt-2">
+              <a
+                href={studioInfo.instagram || "https://www.instagram.com/yeobaek_studio_iksan/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2.5 px-3 rounded-xl bg-white border border-stone-200 text-stone-700 flex items-center justify-center space-x-1.5 text-[11px] font-medium"
+              >
+                <Instagram className="w-3.5 h-3.5 text-rose-500" />
+                <span>본식인스타</span>
+              </a>
+              <a
+                href={studioInfo.instagramIphone || "https://www.instagram.com/yeobaek_iphone_iksan/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2.5 px-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center justify-center space-x-1.5 text-[11px] font-medium"
+              >
+                <Instagram className="w-3.5 h-3.5 text-rose-600" />
+                <span>아이폰인스타</span>
+                <span className="px-1 py-0.2 bg-rose-500 text-white text-[8px] rounded-full">NEW</span>
+              </a>
+            </div>
 
             <div className="flex items-center justify-between text-xs text-[#777777] pt-1">
               <span className="flex items-center space-x-1">

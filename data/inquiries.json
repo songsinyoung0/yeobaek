@@ -1,1 +1,38 @@
-[]
+[
+  {
+    "id": "inq_1794104268820",
+    "referenceNumber": "YB-985330",
+    "submittedAt": "2026년 11월 8일 AM 11:17",
+    "status": "NEW",
+    "data": {
+      "serviceType": "COMBO_BOTH",
+      "serviceSummary": "💎 본식스냅 + 아이폰스냅 함께 예약 (5만원 동시할인)",
+      "groomName": "신랑테스트",
+      "brideName": "신부테스트",
+      "phone": "010-9855-5795",
+      "email": "yeobaek5795@naver.com",
+      "weddingDate": "2026-12-25",
+      "weddingTime": "12:30",
+      "venueName": "웨스턴라이프호텔",
+      "selectedPackage": "album",
+      "selectedIphonePackage": "iphone-b",
+      "packageName": "본식: 화보앨범형 + 아이폰: 아이폰스냅 B타입 (동시할인 -50,000원 적용)",
+      "priceText": "950,000원 (VAT 별도)",
+      "reviewEvent": "JOIN"
+    },
+    "serviceType": "COMBO_BOTH",
+    "serviceSummary": "💎 본식스냅 + 아이폰스냅 함께 예약 (5만원 동시할인)",
+    "groomName": "신랑테스트",
+    "brideName": "신부테스트",
+    "phone": "010-9855-5795",
+    "email": "yeobaek5795@naver.com",
+    "weddingDate": "2026-12-25",
+    "weddingTime": "12:30",
+    "venueName": "웨스턴라이프호텔",
+    "selectedPackage": "album",
+    "selectedIphonePackage": "iphone-b",
+    "packageName": "본식: 화보앨범형 + 아이폰: 아이폰스냅 B타입 (동시할인 -50,000원 적용)",
+    "priceText": "950,000원 (VAT 별도)",
+    "reviewEvent": "JOIN"
+  }
+]

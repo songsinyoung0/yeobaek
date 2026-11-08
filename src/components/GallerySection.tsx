@@ -1,21 +1,43 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { X, ChevronLeft, ChevronRight, Maximize2, MapPin, Tag, ImageIcon, Plus, Trash2, Upload, CheckCircle2, Loader2 } from 'lucide-react';
+import { X, ChevronLeft, ChevronRight, Maximize2, MapPin, Tag, ImageIcon, Plus, Trash2, Upload, CheckCircle2, Loader2, Smartphone, Camera, ArrowRight, Award } from 'lucide-react';
 import { GalleryCategory, GalleryItem } from '../types';
 import { useSiteContent } from '../context/ContentContext';
 import { QuickEditPhotoModal } from './AdminEditorModal';
 import { compressImageFile } from '../utils/storageHelper';
 import { uploadImageToVercelBlob } from '../utils/blobStorage';
 import { resolveImageUrl } from '../utils/imageHelper';
+import { IphoneGallery } from './IphoneGallery';
 
-export const GallerySection: React.FC = () => {
+interface GallerySectionProps {
+  onNavigateToPricing?: () => void;
+  onNavigateToReservation?: () => void;
+}
+
+export const GallerySection: React.FC<GallerySectionProps> = ({
+  onNavigateToPricing,
+  onNavigateToReservation,
+}) => {
   const { content, isAdminMode, updateGalleryItem, addGalleryItem, deleteGalleryItem } = useSiteContent();
   const galleryItems = content.galleryItems;
 
+  const [galleryTab, setGalleryTab] = useState<'camera' | 'iphone'>('camera');
   const INITIAL_DISPLAY_COUNT = 12;
   const [selectedCategory, setSelectedCategory] = useState<GalleryCategory>('ALL');
   const [visibleCount, setVisibleCount] = useState<number>(INITIAL_DISPLAY_COUNT);
   const [activeLightboxItem, setActiveLightboxItem] = useState<GalleryItem | null>(null);
   const [editingPhotoItem, setEditingPhotoItem] = useState<GalleryItem | null>(null);
+
+  // Handle hash navigation to #iphone-gallery or #gallery
+  useEffect(() => {
+    const checkHash = () => {
+      if (window.location.hash === '#iphone-gallery' || window.location.hash === '#iphone-portfolio') {
+        setGalleryTab('iphone');
+      }
+    };
+    checkHash();
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, []);
 
   // Add Photo Modal States
   const [isAddPhotoOpen, setIsAddPhotoOpen] = useState(false);
@@ -143,66 +165,125 @@ export const GallerySection: React.FC = () => {
   return (
     <section id="gallery" className="py-24 sm:py-32 bg-[#F5F3EF] border-t border-black/5">
       <div className="max-w-7xl mx-auto px-6 lg:px-12">
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="font-serif-en text-xs sm:text-sm tracking-[0.3em] uppercase text-[#A68F7E] font-medium block mb-3">
-            PORTFOLIO GALLERY
-          </span>
-          <h2 className="font-serif-kr text-3xl sm:text-4xl lg:text-5xl font-light text-[#1A1A1A] tracking-tight leading-snug mb-6">
-            여백스튜디오 본식 스냅 갤러리
-          </h2>
-          <p className="text-sm sm:text-base text-[#555555] font-light leading-relaxed">
-            실제 신랑신부님들의 소중한 예식 현장을 카테고리별로 감상하실 수 있습니다.
-            각 이미지를 클릭하시면 확대 사진과 함께 상세 연출 포인트를 확인하실 수 있습니다.
-          </p>
+        {/* Main Category Tabs: Camera Snap Gallery vs iPhone Snap Gallery */}
+        <div className="flex justify-center mb-10">
+          <div className="inline-flex p-1.5 bg-[#EAE7E2] rounded-2xl border border-black/10 shadow-sm max-w-xl w-full">
+            <button
+              onClick={() => setGalleryTab('camera')}
+              className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-serif-kr font-medium transition-all duration-300 flex items-center justify-center space-x-2 ${
+                galleryTab === 'camera'
+                  ? 'bg-[#1A1A1A] text-white shadow-md'
+                  : 'text-[#666666] hover:text-[#1A1A1A]'
+              }`}
+            >
+              <Camera className="w-4 h-4 text-[#A68F7E]" />
+              <span>본식 카메라 스냅 갤러리</span>
+            </button>
 
-          {/* Admin Photo Upload CTA Button */}
-          {isAdminMode && (
-            <div className="mt-6 flex justify-center">
+            <button
+              onClick={() => setGalleryTab('iphone')}
+              className={`flex-1 py-3 px-4 rounded-xl text-xs sm:text-sm font-serif-kr font-medium transition-all duration-300 flex items-center justify-center space-x-2 relative ${
+                galleryTab === 'iphone'
+                  ? 'bg-rose-600 text-white shadow-md'
+                  : 'text-[#666666] hover:text-rose-600'
+              }`}
+            >
+              <Smartphone className="w-4 h-4" />
+              <span>아이폰 스냅 갤러리</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-sans font-bold ml-1 ${
+                galleryTab === 'iphone' ? 'bg-white text-rose-600' : 'bg-rose-500 text-white'
+              }`}>
+                NEW
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* If iPhone Snap Gallery is selected */}
+        {galleryTab === 'iphone' ? (
+          <div>
+            <IphoneGallery
+              onNavigateToPricing={onNavigateToPricing}
+              onNavigateToReservation={onNavigateToReservation}
+            />
+
+            {/* Back to Camera Snap Gallery Button */}
+            <div className="mt-12 text-center">
               <button
-                onClick={() => setIsAddPhotoOpen(true)}
-                className="px-5 py-2.5 bg-[#1A1A1A] text-amber-300 border border-amber-400/50 rounded-full text-xs font-semibold tracking-wider hover:bg-[#A68F7E] hover:text-white transition-all shadow-md flex items-center space-x-2"
+                onClick={() => {
+                  setGalleryTab('camera');
+                  const el = document.getElementById('gallery');
+                  el?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-white border border-stone-300 text-stone-700 hover:text-stone-900 hover:border-stone-500 text-xs font-serif-kr transition-all shadow-xs"
               >
-                <Plus className="w-4 h-4" />
-                <span>📷 갤러리 신규 사진 직접 추가 (자동 용량 최적화)</span>
+                <span>📸 본식 카메라 스냅 포트폴리오 보기</span>
+                <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div>
+            {/* Section Header */}
+            <div className="text-center max-w-3xl mx-auto mb-12">
+              <span className="font-serif-en text-xs sm:text-sm tracking-[0.3em] uppercase text-[#A68F7E] font-medium block mb-3">
+                PORTFOLIO GALLERY
+              </span>
+              <h2 className="font-serif-kr text-3xl sm:text-4xl lg:text-5xl font-light text-[#1A1A1A] tracking-tight leading-snug mb-6">
+                여백스튜디오 본식 스냅 갤러리
+              </h2>
+              <p className="text-sm sm:text-base text-[#555555] font-light leading-relaxed">
+                실제 신랑신부님들의 소중한 예식 현장을 카테고리별로 감상하실 수 있습니다.
+                각 이미지를 클릭하시면 확대 사진과 함께 상세 연출 포인트를 확인하실 수 있습니다.
+              </p>
 
-      {/* Quick Edit Photo Modal for Gallery Card */}
-      {editingPhotoItem && (
-        <QuickEditPhotoModal
-          isOpen={!!editingPhotoItem}
-          onClose={() => setEditingPhotoItem(null)}
-          currentUrl={editingPhotoItem.imageUrl}
-          title={editingPhotoItem.title}
-          onSave={(newUrl) => {
-            updateGalleryItem(editingPhotoItem.id, { imageUrl: newUrl });
-          }}
-        />
-      )}
+              {/* Admin Photo Upload CTA Button */}
+              {isAdminMode && (
+                <div className="mt-6 flex justify-center">
+                  <button
+                    onClick={() => setIsAddPhotoOpen(true)}
+                    className="px-5 py-2.5 bg-[#1A1A1A] text-amber-300 border border-amber-400/50 rounded-full text-xs font-semibold tracking-wider hover:bg-[#A68F7E] hover:text-white transition-all shadow-md flex items-center space-x-2"
+                  >
+                    <Plus className="w-4 h-4" />
+                    <span>📷 갤러리 신규 사진 직접 추가 (자동 용량 최적화)</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
-        {/* Category Filter Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 mb-10 sm:mb-16">
-          {categories.map((cat) => {
-            const isActive = selectedCategory === cat.key;
-            return (
-              <button
-                key={cat.key}
-                onClick={() => handleCategoryChange(cat.key)}
-                className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-sm tracking-wider uppercase font-medium transition-all duration-300 ${
-                  isActive
-                    ? 'bg-[#1A1A1A] text-white shadow-sm'
-                    : 'bg-white text-[#555555] hover:bg-[#EAE7E2] hover:text-[#1A1A1A] border border-black/5'
-                }`}
-              >
-                <span>{cat.label}</span>
-                <span className="ml-1 sm:ml-1.5 text-[9px] sm:text-[10px] opacity-70 font-serif-en">({cat.enLabel})</span>
-              </button>
-            );
-          })}
-        </div>
+            {/* Quick Edit Photo Modal for Gallery Card */}
+            {editingPhotoItem && (
+              <QuickEditPhotoModal
+                isOpen={!!editingPhotoItem}
+                onClose={() => setEditingPhotoItem(null)}
+                currentUrl={editingPhotoItem.imageUrl}
+                title={editingPhotoItem.title}
+                onSave={(newUrl) => {
+                  updateGalleryItem(editingPhotoItem.id, { imageUrl: newUrl });
+                }}
+              />
+            )}
+
+            {/* Category Filter Tabs */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 mb-10 sm:mb-16">
+              {categories.map((cat) => {
+                const isActive = selectedCategory === cat.key;
+                return (
+                  <button
+                    key={cat.key}
+                    onClick={() => handleCategoryChange(cat.key)}
+                    className={`px-3.5 py-2 sm:px-5 sm:py-2.5 rounded-full text-[11px] sm:text-sm tracking-wider uppercase font-medium transition-all duration-300 ${
+                      isActive
+                        ? 'bg-[#1A1A1A] text-white shadow-sm'
+                        : 'bg-white text-[#555555] hover:bg-[#EAE7E2] hover:text-[#1A1A1A] border border-black/5'
+                    }`}
+                  >
+                    <span>{cat.label}</span>
+                    <span className="ml-1 sm:ml-1.5 text-[9px] sm:text-[10px] opacity-70 font-serif-en">({cat.enLabel})</span>
+                  </button>
+                );
+              })}
+            </div>
 
         {/* Gallery Masonry Grid (Preserves natural horizontal/vertical aspect ratios for mobile & desktop) */}
         <div className="columns-2 lg:columns-3 gap-3.5 sm:gap-6 [column-fill:_balance]">
@@ -327,7 +408,43 @@ export const GallerySection: React.FC = () => {
             )}
           </div>
         )}
+
+        {/* Promotion Banner for iPhone Snap Gallery */}
+        <div className="mt-14 p-6 sm:p-8 bg-gradient-to-r from-rose-50 to-stone-100 rounded-3xl border border-rose-200/80 flex flex-col sm:flex-row items-center justify-between gap-5">
+          <div className="flex items-center space-x-4 text-stone-900">
+            <div className="w-12 h-12 rounded-2xl bg-rose-500 text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Smartphone className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="font-serif-kr text-base font-bold text-stone-900">
+                  여백스튜디오 아이폰 스냅 (iPhone Snap) 갤러리 오픈!
+                </span>
+                <span className="px-2 py-0.5 bg-rose-500 text-white text-[10px] font-bold rounded-full">
+                  NEW
+                </span>
+              </div>
+              <p className="text-xs text-stone-600 font-light mt-0.5 leading-relaxed">
+                최신 Pro 기종으로 포착한 감성적인 찰나의 순간들을 모바일 감성 피드로 확인해 보세요.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              setGalleryTab('iphone');
+              const el = document.getElementById('gallery');
+              el?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            className="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-serif-kr font-medium transition-all shadow-xs flex items-center space-x-1.5 shrink-0"
+          >
+            <span>아이폰 스냅 갤러리 보기</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
+      )}
+    </div>
 
       {/* Add New Gallery Photo Modal (with Auto Compression) */}
       {isAddPhotoOpen && (

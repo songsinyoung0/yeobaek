@@ -57,24 +57,29 @@ export const Footer: React.FC = () => {
               </p>
             </div>
 
-            <div className="pt-4 flex flex-wrap items-center gap-3">
-              <EditableText
-                value={studioInfo.instagram}
-                onSave={(val) => updateStudioInfo({ instagram: val })}
-                isLink
-                linkUrl={studioInfo.instagram}
-                onSaveLinkUrl={(newUrl) => updateStudioInfo({ instagram: newUrl })}
-                label="인스타그램 링크"
-                tag="div"
+            <div className="pt-4 flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-2.5">
+              <a
+                href={studioInfo.instagram || "https://www.instagram.com/yeobaek_studio_iksan/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-full bg-white/10 text-white hover:bg-[#A68F7E] transition-colors flex items-center space-x-2 text-xs font-serif-en"
+                aria-label="여백스튜디오 본식 인스타그램"
               >
-                <div
-                  className="p-2.5 rounded-full bg-white/10 text-white hover:bg-[#A68F7E] transition-colors flex items-center space-x-2 text-xs font-serif-en"
-                  aria-label="여백스튜디오 인스타그램"
-                >
-                  <Instagram className="w-4 h-4 text-pink-400" />
-                  <span>인스타그램 ({getInstagramHandle(studioInfo.instagram)})</span>
-                </div>
-              </EditableText>
+                <Instagram className="w-4 h-4 text-pink-400 shrink-0" />
+                <span>본식 스냅 ({getInstagramHandle(studioInfo.instagram || 'https://www.instagram.com/yeobaek_studio_iksan/')})</span>
+              </a>
+
+              <a
+                href={studioInfo.instagramIphone || "https://www.instagram.com/yeobaek_iphone_iksan/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-full bg-rose-500/20 text-white hover:bg-rose-500 border border-rose-500/30 transition-colors flex items-center space-x-2 text-xs font-serif-en"
+                aria-label="여백스튜디오 아이폰 스냅 인스타그램"
+              >
+                <Instagram className="w-4 h-4 text-rose-300 shrink-0" />
+                <span>아이폰 스냅 (@yeobaek_iphone_iksan)</span>
+                <span className="px-1.5 py-0.2 bg-rose-500 text-white text-[9px] rounded-full">NEW</span>
+              </a>
 
               <a
                 href={studioInfo.kakaoLink || "https://pf.kakao.com/_AxdWxgn"}
@@ -84,7 +89,7 @@ export const Footer: React.FC = () => {
                 title="카카오톡 채널 1:1 문의 바로가기"
               >
                 <KakaoIcon className="w-4 h-4 fill-current" />
-                <span>카카오톡 채널 1:1 상담 바로가기</span>
+                <span>카카오톡 채널 1:1 상담</span>
                 <ExternalLink className="w-3 h-3 opacity-70" />
               </a>
             </div>
